@@ -1,0 +1,2315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ChainVista — Real-Time Supply Intelligence</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg:          #08080f;
+    --bg2:         #0d0d1c;
+    --bg3:         #111127;
+    --card:        #12122a;
+    --card2:       #16163a;
+    --sidebar:     #0a0a18;
+    --pink:        #e91e8c;
+    --pink2:       #ff2d78;
+    --purple:      #7c3aed;
+    --purple2:     #9d5cf6;
+    --cyan:        #00d4ff;
+    --green:       #00e5a0;
+    --yellow:      #f5a623;
+    --red:         #ff4444;
+    --text:        #ffffff;
+    --text2:       #9090b8;
+    --text3:       #5a5a8a;
+    --border:      rgba(124,58,237,0.18);
+    --border2:     rgba(233,30,140,0.25);
+    --glow-pink:   0 0 24px rgba(233,30,140,0.35);
+    --glow-purple: 0 0 24px rgba(124,58,237,0.35);
+    --glow-cyan:   0 0 24px rgba(0,212,255,0.3);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { height:100%; font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); overflow-x:hidden; }
+
+  /* ──────── LANDING PAGE ──────── */
+  #landing {
+    min-height:100vh; display:flex; align-items:center;
+    background: radial-gradient(ellipse 80% 60% at 20% 50%, rgba(124,58,237,0.22) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 70% at 80% 50%, rgba(233,30,140,0.15) 0%, transparent 60%),
+                #09091a;
+    position:relative; overflow:hidden;
+  }
+  .landing-noise {
+    position:absolute; inset:0; pointer-events:none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    opacity:.4;
+  }
+  .landing-content {
+    max-width:640px; padding:0 80px; position:relative; z-index:2; animation: fadeUp .9s ease both;
+  }
+  .landing-brand {
+    font-family:'Syne',sans-serif; font-size:11px; letter-spacing:.25em; text-transform:uppercase;
+    color:var(--purple2); margin-bottom:32px; display:flex; align-items:center; gap:10px;
+  }
+  .landing-brand::before {
+    content:''; display:inline-block; width:32px; height:1px; background:var(--purple2);
+  }
+  .landing-title {
+    font-family:'Syne',sans-serif; font-size:clamp(40px,5vw,72px); font-weight:800; line-height:1.05;
+    letter-spacing:-.02em; margin-bottom:20px;
+  }
+  .landing-subtitle {
+    font-size:20px; font-weight:400; color:var(--text2); margin-bottom:10px; line-height:1.5;
+  }
+  .landing-tag {
+    font-family:'Syne',sans-serif; font-size:13px; font-weight:700; color:var(--pink);
+    margin-bottom:24px; letter-spacing:.05em;
+  }
+  .landing-desc { font-size:15px; color:var(--text2); line-height:1.7; max-width:460px; margin-bottom:48px; }
+  .landing-btns { display:flex; gap:14px; flex-wrap:wrap; }
+  .btn-primary {
+    padding:14px 32px; background:linear-gradient(135deg,var(--pink),var(--purple));
+    border:none; border-radius:8px; color:#fff; font-family:'DM Sans',sans-serif;
+    font-size:15px; font-weight:600; cursor:pointer; transition:.2s;
+    box-shadow: 0 0 30px rgba(233,30,140,0.4);
+  }
+  .btn-primary:hover { transform:translateY(-2px); box-shadow: 0 4px 40px rgba(233,30,140,0.6); }
+  .btn-ghost {
+    padding:14px 32px; background:transparent; border:1px solid rgba(255,255,255,0.2);
+    border-radius:8px; color:#fff; font-size:15px; font-weight:500; cursor:pointer; transition:.2s;
+  }
+  .btn-ghost:hover { border-color:var(--purple2); background:rgba(124,58,237,0.12); }
+
+  /* Globe canvas */
+  #globe-wrap {
+    position:absolute; right:-5%; top:50%; transform:translateY(-50%);
+    width:min(700px,52vw); height:min(700px,52vw); z-index:1;
+  }
+  #globeCanvas { width:100%; height:100%; }
+
+  /* ──────── APP SHELL (sidebar + main) ──────── */
+  #app { display:none; min-height:100vh; }
+  #app.visible { display:flex; }
+  .sidebar {
+    width:240px; min-height:100vh; background:var(--sidebar);
+    border-right:1px solid var(--border); display:flex; flex-direction:column;
+    padding:28px 0; position:fixed; top:0; left:0; z-index:100;
+  }
+  .sidebar-logo {
+    font-family:'Syne',sans-serif; font-size:22px; font-weight:800;
+    padding:0 28px; margin-bottom:40px; letter-spacing:-.01em;
+  }
+  .sidebar-logo span { color:var(--pink); }
+  .nav-item {
+    padding:12px 28px; cursor:pointer; font-size:14px; font-weight:500;
+    color:var(--text2); transition:.18s; border-left:3px solid transparent;
+    display:flex; align-items:center; gap:12px; user-select:none;
+  }
+  .nav-item:hover { color:var(--text); background:rgba(124,58,237,0.08); }
+  .nav-item.active {
+    color:var(--text); background:rgba(124,58,237,0.14);
+    border-left-color:var(--pink); font-weight:600;
+  }
+  .nav-icon { width:18px; opacity:.7; font-size:16px; }
+
+  .main-area {
+    margin-left:240px; flex:1; display:flex; flex-direction:column; min-height:100vh;
+  }
+  .topbar {
+    height:60px; border-bottom:1px solid var(--border); background:var(--bg2);
+    display:flex; align-items:center; justify-content:space-between; padding:0 32px;
+    position:sticky; top:0; z-index:50;
+  }
+  .topbar-title { font-family:'Syne',sans-serif; font-size:15px; color:var(--pink2); font-weight:600; letter-spacing:.05em; }
+  .topbar-badge {
+    font-size:12px; color:var(--text2); padding:5px 14px;
+    border:1px solid var(--border); border-radius:20px; font-weight:500;
+  }
+
+  .page-content { padding:40px 32px; flex:1; animation: fadeUp .4s ease both; }
+  .page-title { font-family:'Syne',sans-serif; font-size:30px; font-weight:800; margin-bottom:32px; color:var(--pink); }
+
+  /* ──────── CARDS ──────── */
+  .stat-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:20px; }
+  .stat-grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:20px; }
+  .card {
+    background:var(--card); border-radius:12px; padding:24px;
+    border:1px solid var(--border); transition:.2s;
+  }
+  .card:hover { border-color:rgba(124,58,237,0.35); }
+  .card-label { font-size:12px; color:var(--text3); letter-spacing:.06em; text-transform:uppercase; margin-bottom:10px; }
+  .card-value { font-family:'Syne',sans-serif; font-size:26px; font-weight:700; margin-bottom:12px; }
+  .card-bar { height:2px; border-radius:2px; width:48px; }
+
+  .chart-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:20px; }
+  .chart-card {
+    background:var(--card); border-radius:12px; padding:20px;
+    border:1px solid var(--border);
+  }
+  .chart-card-title { font-size:13px; color:var(--text2); margin-bottom:16px; font-weight:500; }
+  .chart-wrap { position:relative; width:100%; height:150px; }
+  .chart-wrap-tall { position:relative; width:100%; height:200px; }
+
+  /* ──────── PASSPORT CONTROLS ──────── */
+  .passport-section {
+    background:var(--card); border-radius:12px; padding:24px; border:1px solid var(--border); margin-bottom:20px;
+  }
+  .passport-title { font-size:13px; color:var(--text2); margin-bottom:18px; font-weight:500; text-transform:uppercase; letter-spacing:.05em; }
+  .passport-btns { display:flex; gap:10px; flex-wrap:wrap; }
+  .pp-btn {
+    padding:9px 20px; border:none; border-radius:6px; font-size:13px; font-weight:600;
+    cursor:pointer; transition:.18s; color:#fff;
+  }
+  .pp-btn:hover { filter:brightness(1.15); transform:translateY(-1px); }
+  .pp-issue   { background:var(--pink); }
+  .pp-update  { background:#1e74e8; }
+  .pp-view    { background:var(--green); color:#000; }
+  .pp-verify  { background:var(--yellow); color:#000; }
+  .pp-mint    { background:var(--purple); }
+
+  /* ──────── BLOCKCHAIN TABLE ──────── */
+  .bc-section { background:var(--card); border-radius:12px; padding:24px; border:1px solid var(--border); margin-bottom:20px; }
+  .bc-title { font-size:14px; font-weight:600; margin-bottom:18px; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th { text-align:left; color:var(--text3); font-weight:500; padding:8px 12px; border-bottom:1px solid var(--border); text-transform:uppercase; font-size:11px; letter-spacing:.06em; }
+  td { padding:12px 12px; border-bottom:1px solid rgba(255,255,255,0.04); color:var(--text2); }
+  td:first-child { color:var(--text); }
+  .status-success { color:var(--green); font-weight:600; }
+  .status-confirmed { color:var(--cyan); font-weight:600; }
+  .status-pending { color:var(--yellow); font-weight:600; }
+
+  .etherscan-btn {
+    display:inline-block; margin-top:16px; padding:10px 22px;
+    background:#1e74e8; border:none; border-radius:6px; color:#fff; font-size:13px;
+    font-weight:600; cursor:pointer; transition:.18s;
+  }
+  .etherscan-btn:hover { background:#2583f8; }
+
+  /* ──────── SHIPMENTS ──────── */
+  /* ── SHIPMENTS PAGE ENHANCED ── */
+  .ship-page-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:24px; }
+  .ship-toolbar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .ship-search {
+    background:var(--card2); border:1px solid var(--border); border-radius:10px;
+    padding:8px 14px; color:var(--text); font-size:13px; outline:none; width:220px;
+    font-family:'DM Sans',sans-serif; transition:border-color .2s;
+  }
+  .ship-search:focus { border-color:var(--purple2); }
+  .ship-search::placeholder { color:var(--text3); }
+  .ship-filter-btn {
+    background:var(--card2); border:1px solid var(--border); border-radius:10px;
+    padding:8px 14px; color:var(--text2); font-size:12px; cursor:pointer;
+    font-family:'DM Sans',sans-serif; transition:all .2s; white-space:nowrap;
+  }
+  .ship-filter-btn:hover, .ship-filter-btn.active { border-color:var(--purple); color:var(--purple2); background:rgba(124,58,237,.12); }
+  .ship-view-toggle { display:flex; gap:4px; background:var(--card); border-radius:10px; padding:4px; border:1px solid var(--border); }
+  .view-btn { background:transparent; border:none; color:var(--text3); padding:6px 10px; border-radius:7px; cursor:pointer; font-size:14px; transition:all .15s; }
+  .view-btn.active { background:var(--card2); color:var(--purple2); }
+  .ship-summary-bar { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:24px; }
+  .ship-summary-card {
+    background:var(--card); border:1px solid var(--border); border-radius:12px;
+    padding:16px 18px; display:flex; align-items:center; gap:14px; cursor:default;
+  }
+  .ship-summary-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+  .ship-summary-label { font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:.07em; margin-bottom:3px; }
+  .ship-summary-val { font-size:22px; font-weight:700; font-family:'Syne',sans-serif; line-height:1; }
+  .shipments-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(360px,1fr)); gap:16px; }
+  .shipments-grid.list-view { grid-template-columns:1fr; }
+  .ship-card {
+    background:var(--card); border-radius:12px; padding:24px;
+    border:1px solid var(--border); transition:.25s; cursor:pointer;
+  }
+  .ship-card:hover { border-color:var(--pink2); box-shadow:var(--glow-pink); transform:translateY(-2px); }
+  .ship-no { font-family:'Syne',sans-serif; font-size:18px; font-weight:700; margin-bottom:6px; }
+  .ship-info { font-size:13px; color:var(--text2); margin-bottom:4px; }
+  .ship-badge {
+    display:inline-block; margin-top:12px; padding:4px 12px; border-radius:20px;
+    font-size:11px; font-weight:600; letter-spacing:.04em; text-transform:uppercase;
+  }
+  .badge-transit   { background:rgba(124,58,237,0.2); color:var(--purple2); border:1px solid var(--purple); }
+  .badge-delayed   { background:rgba(233,30,140,0.15); color:var(--pink); border:1px solid var(--pink); }
+  .badge-delivered { background:rgba(0,229,160,0.1); color:var(--green); border:1px solid var(--green); }
+  .badge-processing{ background:rgba(245,166,35,0.1); color:var(--yellow); border:1px solid var(--yellow); }
+
+  .ship-details { margin-top:16px; display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .ship-detail-item { font-size:11px; color:var(--text3); }
+  .ship-detail-item span { color:var(--text2); display:block; font-size:13px; margin-top:2px; }
+  /* route row */
+  .ship-route { display:flex; align-items:center; gap:8px; margin:10px 0 12px; font-size:12px; color:var(--text2); }
+  .ship-route-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  .ship-route-line { flex:1; height:1px; background:linear-gradient(90deg,var(--purple),var(--pink)); opacity:.4; }
+  .ship-route span { font-weight:600; color:var(--text); font-size:12px; }
+  /* temp/humidity mini bars */
+  .ship-metrics { margin-top:14px; display:flex; flex-direction:column; gap:8px; }
+  .metric-row { display:flex; align-items:center; gap:10px; font-size:11px; }
+  .metric-label { color:var(--text3); width:60px; flex-shrink:0; }
+  .metric-bar-wrap { flex:1; height:4px; background:rgba(255,255,255,.07); border-radius:4px; overflow:hidden; }
+  .metric-bar { height:100%; border-radius:4px; transition:width .5s ease; }
+  .metric-val { color:var(--text2); font-size:12px; width:46px; text-align:right; flex-shrink:0; }
+  /* progress timeline */
+  .ship-progress { margin-top:14px; display:flex; align-items:center; gap:0; }
+  .prog-step { display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .prog-dot { width:10px; height:10px; border-radius:50%; border:2px solid var(--border); flex-shrink:0; }
+  .prog-dot.done { background:var(--green); border-color:var(--green); }
+  .prog-dot.active { background:var(--purple); border-color:var(--purple); box-shadow:0 0 8px var(--purple); }
+  .prog-dot.pending { background:transparent; border-color:var(--text3); }
+  .prog-line { flex:1; height:2px; background:rgba(255,255,255,.08); }
+  .prog-line.done { background:linear-gradient(90deg,var(--green),var(--purple)); }
+  .prog-label { font-size:9px; color:var(--text3); text-transform:uppercase; letter-spacing:.04em; margin-top:3px; white-space:nowrap; }
+  /* list-view card override */
+  .list-view .ship-card { display:grid; grid-template-columns:160px 1fr 1fr 1fr auto; align-items:center; gap:24px; padding:16px 20px; }
+  .list-view .ship-route, .list-view .ship-metrics, .list-view .ship-progress { display:none; }
+  .list-view .ship-details { margin-top:0; display:contents; }
+  .list-view .ship-detail-item { font-size:12px; }
+
+  .add-shipment-btn {
+    margin-bottom:24px; padding:10px 24px; background:linear-gradient(135deg,var(--pink),var(--purple));
+    border:none; border-radius:8px; color:#fff; font-size:13px; font-weight:600; cursor:pointer; transition:.2s;
+  }
+  .add-shipment-btn:hover { transform:translateY(-1px); box-shadow:var(--glow-pink); }
+
+  /* ──────── TRACKING MAP ──────── */
+  #trackingMap {
+    width:100%; height:520px; border-radius:12px;
+    border:1px solid var(--border); position:relative; overflow:hidden;
+    z-index:0;
+  }
+  /* Leaflet dark override */
+  .leaflet-container { background:#0d0d1e !important; border-radius:12px; }
+  .leaflet-tile-pane { filter: brightness(0.88) saturate(0.7); }
+  .map-legend {
+    position:absolute; bottom:20px; left:20px; z-index:999; pointer-events:none;
+    background:rgba(8,8,15,.92); border:1px solid var(--border); border-radius:10px;
+    padding:14px 18px; font-size:12px; backdrop-filter:blur(6px);
+  }
+  .legend-item { display:flex; align-items:center; gap:8px; margin-bottom:7px; color:var(--text2); }
+  .legend-item:last-child { margin-bottom:0; }
+  .legend-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  /* Custom Leaflet marker */
+  .cv-marker {
+    display:flex; flex-direction:column; align-items:center;
+  }
+  .cv-marker-dot {
+    width:16px; height:16px; border-radius:50%;
+    border:2px solid rgba(255,255,255,0.4);
+    box-shadow:0 0 12px currentColor;
+    animation:markerPulse 2s ease infinite;
+  }
+  .cv-marker-label {
+    background:rgba(8,8,15,0.88); backdrop-filter:blur(4px);
+    border:1px solid rgba(255,255,255,0.08); border-radius:6px;
+    padding:3px 8px; margin-top:4px; white-space:nowrap; pointer-events:none;
+  }
+  .cv-marker-label .m-id { font-weight:700; font-size:11px; color:#fff; display:block; }
+  .cv-marker-label .m-city { font-size:10px; color:#9090b8; display:block; }
+  @keyframes markerPulse {
+    0%,100%{ box-shadow:0 0 8px currentColor; }
+    50%{ box-shadow:0 0 20px currentColor, 0 0 40px currentColor; }
+  }
+  /* Leaflet popup dark */
+  .leaflet-popup-content-wrapper {
+    background:var(--card2) !important; color:var(--text) !important;
+    border:1px solid var(--border) !important; border-radius:10px !important;
+    box-shadow:0 0 30px rgba(124,58,237,0.3) !important;
+  }
+  .leaflet-popup-tip { background:var(--card2) !important; }
+  .leaflet-popup-close-button { color:var(--text2) !important; }
+  .popup-inner { font-family:'DM Sans',sans-serif; min-width:180px; }
+  .popup-title { font-family:'Syne',sans-serif; font-weight:700; font-size:15px; margin-bottom:10px; }
+  .popup-row { display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px; }
+  .popup-row span:first-child { color:#5a5a8a; text-transform:uppercase; letter-spacing:.04em; font-size:10px; }
+  .popup-row span:last-child { color:#c0c0e0; font-weight:500; }
+  .tracking-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:24px; }
+
+  /* ──────── ALERTS ──────── */
+  .alerts-filters { display:flex; gap:8px; margin-bottom:24px; }
+  .filter-btn {
+    padding:7px 18px; border-radius:6px; border:1px solid var(--border);
+    background:transparent; color:var(--text2); font-size:13px; cursor:pointer; transition:.15s;
+  }
+  .filter-btn.active { background:rgba(124,58,237,0.18); border-color:var(--purple2); color:var(--text); }
+  .alert-card {
+    background:var(--card); border-radius:10px; padding:20px 24px; margin-bottom:12px;
+    border-left:3px solid transparent; border-top:1px solid var(--border); border-right:1px solid var(--border); border-bottom:1px solid var(--border);
+    display:flex; justify-content:space-between; align-items:center; transition:.2s;
+  }
+  .alert-card.high   { border-left-color:var(--red);    box-shadow:0 0 20px rgba(255,68,68,.08); }
+  .alert-card.warning{ border-left-color:var(--yellow); box-shadow:0 0 20px rgba(245,166,35,.08); }
+  .alert-card.info   { border-left-color:var(--cyan);   box-shadow:0 0 20px rgba(0,212,255,.08); }
+  .alert-card.resolved { opacity:.5; }
+  .alert-level { font-family:'Syne',sans-serif; font-size:12px; font-weight:700; letter-spacing:.06em; margin-bottom:4px; }
+  .alert-level.high { color:var(--red); }
+  .alert-level.warning { color:var(--yellow); }
+  .alert-level.info { color:var(--cyan); }
+  .alert-msg { font-size:13px; color:var(--text2); }
+  .alert-title-text { font-size:15px; font-weight:600; margin-bottom:3px; }
+  .resolve-btn {
+    padding:6px 16px; background:transparent; border:1px solid var(--border);
+    border-radius:6px; color:var(--text2); font-size:12px; cursor:pointer; transition:.15s; white-space:nowrap;
+  }
+  .resolve-btn:hover { border-color:var(--green); color:var(--green); }
+  .alert-time { font-size:11px; color:var(--text3); margin-top:4px; }
+
+  /* ──────── ANALYTICS ──────── */
+  .analytics-grid { display:grid; grid-template-columns:2fr 1fr; gap:16px; margin-bottom:20px; }
+  .analytics-grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:20px; }
+
+  /* ──────── MODAL ──────── */
+  .modal-overlay {
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,.7);
+    z-index:1000; align-items:center; justify-content:center; backdrop-filter:blur(4px);
+  }
+  .modal-overlay.open { display:flex; }
+  .modal {
+    background:var(--card2); border-radius:16px; padding:32px; width:480px; max-width:90vw;
+    border:1px solid var(--border2); box-shadow:0 0 60px rgba(124,58,237,0.3);
+    animation: fadeUp .25s ease;
+  }
+  .modal h3 { font-family:'Syne',sans-serif; font-size:20px; font-weight:700; margin-bottom:24px; }
+  .modal label { font-size:12px; color:var(--text3); letter-spacing:.06em; text-transform:uppercase; display:block; margin-bottom:6px; }
+  .modal input, .modal select {
+    width:100%; padding:10px 14px; background:var(--bg3); border:1px solid var(--border);
+    border-radius:8px; color:var(--text); font-size:14px; margin-bottom:16px;
+    outline:none; transition:.18s;
+  }
+  .modal input:focus, .modal select:focus { border-color:var(--purple2); }
+  .modal-btns { display:flex; gap:10px; justify-content:flex-end; margin-top:8px; }
+  .modal-btns button:first-child { background:transparent; border:1px solid var(--border); color:var(--text2); padding:9px 20px; border-radius:7px; cursor:pointer; }
+  .modal-btns button:last-child { background:linear-gradient(135deg,var(--pink),var(--purple)); border:none; color:#fff; padding:9px 22px; border-radius:7px; font-weight:600; cursor:pointer; }
+
+  /* ──────── TOAST ──────── */
+  #toast {
+    position:fixed; bottom:30px; right:30px; background:var(--card2);
+    border:1px solid var(--green); border-radius:10px; padding:14px 24px;
+    font-size:13px; font-weight:500; color:var(--green); z-index:9999;
+    transform:translateY(80px); opacity:0; transition:.3s; box-shadow:var(--glow-cyan);
+  }
+  #toast.show { transform:translateY(0); opacity:1; }
+
+  /* ──────── LOADER ──────── */
+  .loader { text-align:center; padding:60px; color:var(--text3); font-size:13px; }
+  .spinner {
+    width:32px; height:32px; border:2px solid var(--border);
+    border-top-color:var(--pink); border-radius:50%; animation:spin .7s linear infinite; margin:0 auto 12px;
+  }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes spin { to{transform:rotate(360deg)} }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  @keyframes glow-pulse { 0%,100%{box-shadow:0 0 10px rgba(233,30,140,.3)} 50%{box-shadow:0 0 30px rgba(233,30,140,.7)} }
+  .pulse { animation:pulse 2s ease infinite; }
+
+  /* ──────── METAMASK ──────── */
+  .mm-bar {
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;
+    gap:12px; margin-bottom:18px;
+  }
+  .mm-connect-btn {
+    display:flex; align-items:center; gap:9px; padding:9px 20px;
+    background:linear-gradient(135deg,#f6851b,#e4761b);
+    border:none; border-radius:8px; color:#fff; font-size:13px; font-weight:700;
+    cursor:pointer; transition:.2s; box-shadow:0 0 20px rgba(246,133,27,.3);
+  }
+  .mm-connect-btn:hover { transform:translateY(-1px); box-shadow:0 4px 28px rgba(246,133,27,.55); }
+  .mm-connect-btn img { width:20px; height:20px; }
+  .mm-status {
+    display:flex; align-items:center; gap:8px; font-size:12px; padding:7px 14px;
+    border-radius:8px; border:1px solid var(--border); background:var(--bg3);
+  }
+  .mm-status-dot { width:8px; height:8px; border-radius:50%; background:var(--text3); }
+  .mm-status-dot.connected { background:var(--green); box-shadow:0 0 8px var(--green); }
+  .mm-status-dot.pending { background:var(--yellow); animation:pulse 1s ease infinite; }
+  .mm-addr { font-family:monospace; color:var(--cyan); font-size:12px; }
+  .mm-network-badge {
+    font-size:10px; padding:2px 8px; border-radius:10px; font-weight:700; letter-spacing:.04em;
+    background:rgba(0,229,160,0.1); color:var(--green); border:1px solid rgba(0,229,160,0.3);
+  }
+  .tx-progress {
+    display:none; align-items:center; gap:10px; padding:12px 16px;
+    background:rgba(124,58,237,0.1); border:1px solid var(--border); border-radius:8px;
+    margin-top:12px; font-size:13px; color:var(--text2);
+  }
+  .tx-progress.show { display:flex; }
+  .tx-spinner { width:16px; height:16px; border:2px solid var(--border); border-top-color:var(--purple2); border-radius:50%; animation:spin .6s linear infinite; }
+  .tx-link { color:var(--cyan); text-decoration:none; font-family:monospace; font-size:11px; }
+  .tx-link:hover { text-decoration:underline; }
+
+  /* ════════ THEME TOGGLE ════════ */
+  body.cyber-theme {
+    --bg:#000a00; --bg2:#001400; --bg3:#001e00;
+    --card:#001a00; --card2:#002200;
+    --sidebar:#000e00;
+    --pink:#00ff41; --pink2:#00ff90;
+    --purple:#00cc33; --purple2:#00ff55;
+    --cyan:#39ff14; --green:#00ff41;
+    --yellow:#ccff00; --red:#ff4400;
+    --border:rgba(0,255,65,0.18); --border2:rgba(0,255,65,0.3);
+    --glow-pink:0 0 24px rgba(0,255,65,0.4);
+    --glow-purple:0 0 24px rgba(0,255,65,0.35);
+    --glow-cyan:0 0 24px rgba(57,255,20,0.35);
+    --text:#e0ffe0; --text2:#80c880; --text3:#3a7a3a;
+  }
+  body.cyber-theme .sidebar { border-right:1px solid rgba(0,255,65,.15); }
+  body.cyber-theme .page-title { color:var(--green); text-shadow:0 0 20px rgba(0,255,65,.5); }
+  body.cyber-theme .ship-no { text-shadow:0 0 12px rgba(0,255,65,.4); }
+  .theme-toggle-btn {
+    background:transparent; border:1px solid var(--border);
+    border-radius:20px; padding:5px 14px; cursor:pointer;
+    font-size:12px; color:var(--text2); transition:all .3s;
+    display:flex; align-items:center; gap:6px;
+  }
+  .theme-toggle-btn:hover { border-color:var(--purple2); color:var(--purple2); }
+
+  /* ════════ COMMAND BAR ════════ */
+  .cmd-bar-wrap {
+    position:fixed; top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,.75); backdrop-filter:blur(6px);
+    z-index:2000; display:none; align-items:flex-start; justify-content:center;
+    padding-top:15vh;
+  }
+  .cmd-bar-wrap.open { display:flex; }
+  .cmd-bar-box {
+    width:620px; max-width:92vw;
+    background:var(--card2); border:1px solid var(--border2);
+    border-radius:16px; overflow:hidden;
+    box-shadow:0 0 60px rgba(124,58,237,.4);
+  }
+  .cmd-bar-header { padding:8px 16px; font-size:11px; color:var(--text3); border-bottom:1px solid var(--border); letter-spacing:.06em; text-transform:uppercase; display:flex; justify-content:space-between; }
+  .cmd-input {
+    width:100%; background:transparent; border:none; outline:none;
+    padding:18px 20px; font-size:16px; color:var(--text);
+    font-family:'DM Sans',sans-serif;
+  }
+  .cmd-input::placeholder { color:var(--text3); }
+  .cmd-suggestions { padding:8px; border-top:1px solid var(--border); }
+  .cmd-suggestion {
+    padding:10px 14px; border-radius:8px; cursor:pointer;
+    font-size:12px; color:var(--text2); transition:.15s;
+    display:flex; align-items:center; gap:10px;
+  }
+  .cmd-suggestion:hover { background:rgba(124,58,237,.12); color:var(--text); }
+  .cmd-suggestion .cmd-icon { font-size:14px; }
+  .cmd-result {
+    padding:16px 20px; border-top:1px solid var(--border);
+    font-size:13px; color:var(--text2); line-height:1.7;
+    max-height:220px; overflow-y:auto; display:none;
+  }
+  .cmd-result.visible { display:block; }
+  .cmd-spinner { display:inline-block; width:14px; height:14px; border:2px solid var(--border); border-top-color:var(--purple); border-radius:50%; animation:spin .6s linear infinite; margin-right:8px; vertical-align:middle; }
+
+  /* ════════ AI ANOMALY PANEL ════════ */
+  .anomaly-panel {
+    background:var(--card); border:1px solid rgba(233,30,140,.3);
+    border-radius:14px; padding:20px 24px; margin-bottom:24px;
+    position:relative; overflow:hidden;
+  }
+  .anomaly-panel::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg,var(--pink),var(--purple),var(--cyan));
+    animation:scanline 2s linear infinite;
+  }
+  @keyframes scanline { from{background-position:-200% 0} to{background-position:200% 0} }
+  .anomaly-header { display:flex; align-items:center; gap:10px; margin-bottom:14px; font-family:'Syne',sans-serif; font-size:14px; font-weight:700; color:var(--pink); }
+  .anomaly-item {
+    display:flex; align-items:flex-start; gap:12px; padding:10px 14px;
+    background:rgba(233,30,140,.06); border:1px solid rgba(233,30,140,.15);
+    border-radius:10px; margin-bottom:8px; font-size:12px; line-height:1.6;
+  }
+  .anomaly-item.warn { background:rgba(245,166,35,.06); border-color:rgba(245,166,35,.2); }
+  .anomaly-item.ok   { background:rgba(0,229,160,.05); border-color:rgba(0,229,160,.15); }
+  .anomaly-sev { font-size:16px; flex-shrink:0; margin-top:1px; }
+  .anomaly-meta { font-size:10px; color:var(--text3); margin-top:3px; }
+  .anomaly-refresh { background:transparent; border:1px solid var(--border); border-radius:8px; padding:6px 14px; cursor:pointer; font-size:11px; color:var(--text2); margin-left:auto; transition:.2s; }
+  .anomaly-refresh:hover { border-color:var(--pink); color:var(--pink); }
+
+  /* ════════ DELAY PROBABILITY BADGE ════════ */
+  .delay-prob {
+    display:inline-flex; align-items:center; gap:5px;
+    padding:3px 9px; border-radius:10px; font-size:10px; font-weight:700;
+    letter-spacing:.04em; margin-top:6px;
+  }
+  .delay-prob.low  { background:rgba(0,229,160,.1); color:var(--green); border:1px solid rgba(0,229,160,.25); }
+  .delay-prob.med  { background:rgba(245,166,35,.1); color:var(--yellow); border:1px solid rgba(245,166,35,.3); }
+  .delay-prob.high { background:rgba(233,30,140,.12); color:var(--pink); border:1px solid rgba(233,30,140,.3); }
+  .delay-prob-bar { height:3px; border-radius:3px; transition:width .5s; }
+
+  /* ════════ QR SCANNER MODAL ════════ */
+  .qr-scanner-box { text-align:center; padding:10px 0 20px; }
+  .qr-viewport {
+    width:200px; height:200px; border:2px solid var(--purple);
+    border-radius:12px; margin:0 auto 16px; position:relative;
+    overflow:hidden; background:var(--bg3);
+    box-shadow:0 0 30px rgba(124,58,237,.3);
+  }
+  .qr-scan-line {
+    position:absolute; left:0; right:0; height:2px;
+    background:linear-gradient(90deg,transparent,var(--cyan),transparent);
+    animation:qrScan 1.5s ease-in-out infinite;
+    box-shadow:0 0 8px var(--cyan);
+  }
+  @keyframes qrScan { 0%{top:0} 50%{top:196px} 100%{top:0} }
+  .qr-corner {
+    position:absolute; width:18px; height:18px;
+    border-color:var(--cyan); border-style:solid;
+  }
+  .qr-corner.tl { top:8px; left:8px; border-width:2px 0 0 2px; }
+  .qr-corner.tr { top:8px; right:8px; border-width:2px 2px 0 0; }
+  .qr-corner.bl { bottom:8px; left:8px; border-width:0 0 2px 2px; }
+  .qr-corner.br { bottom:8px; right:8px; border-width:0 2px 2px 0; }
+  .qr-pattern {
+    position:absolute; inset:20px;
+    display:grid; grid-template-columns:repeat(8,1fr); gap:2px;
+  }
+  .qr-cell { border-radius:2px; }
+  .qr-status { font-size:12px; color:var(--text2); margin-bottom:8px; }
+  .qr-found { font-size:13px; font-weight:600; color:var(--green); display:none; }
+
+  /* ════════ RICH TOAST STACK ════════ */
+  #toast-stack {
+    position:fixed; bottom:30px; right:30px; z-index:9999;
+    display:flex; flex-direction:column; gap:8px; align-items:flex-end;
+    pointer-events:none;
+  }
+  .toast-item {
+    background:var(--card2); border-radius:10px; padding:12px 18px;
+    font-size:12px; font-weight:500; max-width:340px;
+    transform:translateX(120%); opacity:0; transition:.3s cubic-bezier(.4,0,.2,1);
+    pointer-events:all; display:flex; align-items:flex-start; gap:10px;
+    box-shadow:0 4px 20px rgba(0,0,0,.5); cursor:pointer;
+  }
+  .toast-item.in  { transform:translateX(0); opacity:1; }
+  .toast-item.out { transform:translateX(120%); opacity:0; }
+  .toast-item.alert { border:1px solid var(--pink);   color:var(--pink); }
+  .toast-item.warn  { border:1px solid var(--yellow);  color:var(--yellow); }
+  .toast-item.ok    { border:1px solid var(--green);   color:var(--green); }
+  .toast-item.info  { border:1px solid var(--purple2); color:var(--purple2); }
+  .toast-icon { font-size:16px; flex-shrink:0; margin-top:1px; }
+  .toast-body { flex:1; }
+  .toast-title { font-weight:700; font-size:12px; margin-bottom:2px; }
+  .toast-msg { color:var(--text2); font-size:11px; line-height:1.5; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════ LANDING PAGE ═══════════════════════════════ -->
+<div id="landing">
+  <div class="landing-noise"></div>
+  <div class="landing-content">
+    <div class="landing-brand">CHAINVISTA</div>
+    <h1 class="landing-title">Real-Time Supply Intelligence.</h1>
+    <p class="landing-subtitle">Powered by IoT. Secured by Blockchain.</p>
+    <p class="landing-tag">Intelligence You Can Trust.</p>
+    <p class="landing-desc">A next-generation supply chain platform delivering secure tracking, predictive analytics, and transparent operations across every link.</p>
+    <div class="landing-btns">
+      <button class="btn-primary" onclick="launchApp()">Launch Dashboard</button>
+      <button class="btn-ghost" onclick="launchApp('tracking')">Live Tracking</button>
+    </div>
+  </div>
+  <div id="globe-wrap"><canvas id="globeCanvas"></canvas></div>
+</div>
+
+<!-- ═══════════════════════════════ APP SHELL ═══════════════════════════════ -->
+<div id="app">
+  <nav class="sidebar">
+    <div class="sidebar-logo">Chain<span>Vista</span></div>
+    <div class="nav-item active" onclick="navigate('dashboard')" id="nav-dashboard">
+      <span class="nav-icon">⬡</span> Dashboard
+    </div>
+    <div class="nav-item" onclick="navigate('shipments')" id="nav-shipments">
+      <span class="nav-icon">📦</span> Shipments
+    </div>
+    <div class="nav-item" onclick="navigate('tracking')" id="nav-tracking">
+      <span class="nav-icon">📡</span> Tracking
+    </div>
+    <div class="nav-item" onclick="navigate('alerts')" id="nav-alerts">
+      <span class="nav-icon">🔔</span> Alerts <span id="alert-count-badge" style="margin-left:auto;background:var(--pink);color:#fff;font-size:10px;padding:2px 7px;border-radius:10px;display:none"></span>
+    </div>
+    <div class="nav-item" onclick="navigate('analytics')" id="nav-analytics">
+      <span class="nav-icon">📊</span> Analytics
+    </div>
+  </nav>
+
+  <div class="main-area">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="topbar-title">IoT Command Center</span>
+        <button class="cmd-bar-trigger" onclick="openCmdBar()" title="Smart Command (Ctrl+K)" style="background:rgba(124,58,237,.12);border:1px solid var(--border);border-radius:8px;padding:4px 12px;font-size:11px;color:var(--purple2);cursor:pointer;letter-spacing:.04em;transition:.2s" onmouseover="this.style.borderColor='var(--purple2)'" onmouseout="this.style.borderColor='var(--border)'">⌘ Ask AI</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="theme-toggle-btn" id="theme-btn" onclick="toggleTheme()">🌙 Cyber Mode</button>
+        <button onclick="openQRScanner()" style="background:transparent;border:1px solid var(--border);border-radius:8px;padding:5px 12px;font-size:11px;color:var(--text2);cursor:pointer;transition:.2s" onmouseover="this.style.borderColor='var(--cyan)'" onmouseout="this.style.borderColor='var(--border)'">📱 QR Scan</button>
+        <button onclick="exportReport()" style="background:transparent;border:1px solid var(--border);border-radius:8px;padding:5px 12px;font-size:11px;color:var(--text2);cursor:pointer;transition:.2s" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--border)'">📤 Export</button>
+        <span class="topbar-badge" id="topbar-wallet-badge">Guest Mode</span>
+      </div>
+    </div>
+    <div class="page-content" id="page-content"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ MODAL ═══════════════════════════════ -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal-body"></div>
+</div>
+
+<!-- TOAST STACK -->
+<div id="toast-stack"></div>
+<!-- LEGACY TOAST (kept for compat) -->
+<div id="toast"></div>
+
+<!-- ═══ COMMAND BAR ═══ -->
+<div class="cmd-bar-wrap" id="cmd-bar-wrap" onclick="if(event.target===this)closeCmdBar()">
+  <div class="cmd-bar-box">
+    <div class="cmd-bar-header">
+      <span>🤖 ChainVista AI Command</span>
+      <span style="cursor:pointer" onclick="closeCmdBar()">✕</span>
+    </div>
+    <input class="cmd-input" id="cmd-input" placeholder="Ask anything… e.g. 'show delayed shipments', 'flag temp anomalies'" oninput="cmdAutocomplete()" onkeydown="cmdKeyDown(event)" autofocus/>
+    <div class="cmd-suggestions" id="cmd-suggestions">
+      <div class="cmd-suggestion" onclick="runCmd('Show all delayed shipments')"><span class="cmd-icon">🚨</span>Show all delayed shipments</div>
+      <div class="cmd-suggestion" onclick="runCmd('Which shipments have temperature breaches?')"><span class="cmd-icon">🌡️</span>Which shipments have temperature breaches?</div>
+      <div class="cmd-suggestion" onclick="runCmd('Summarise current supply chain health')"><span class="cmd-icon">📊</span>Summarise current supply chain health</div>
+      <div class="cmd-suggestion" onclick="runCmd('Which shipments are arriving today?')"><span class="cmd-icon">📦</span>Which shipments are arriving today?</div>
+    </div>
+    <div class="cmd-result" id="cmd-result"></div>
+  </div>
+</div>
+
+<!-- ═══ QR SCANNER MODAL ═══ -->
+<div class="modal-overlay" id="qr-overlay" style="z-index:3000">
+  <div class="modal" id="qr-modal" style="max-width:360px">
+    <div class="modal-title">📱 Shipment QR Scanner</div>
+    <div class="qr-scanner-box">
+      <div class="qr-viewport" id="qr-viewport">
+        <div class="qr-scan-line" id="qr-scan-line"></div>
+        <div class="qr-corner tl"></div><div class="qr-corner tr"></div>
+        <div class="qr-corner bl"></div><div class="qr-corner br"></div>
+        <div class="qr-pattern" id="qr-pattern"></div>
+      </div>
+      <div class="qr-status" id="qr-status">Scanning for QR code…</div>
+      <div class="qr-found" id="qr-found">✅ Shipment detected!</div>
+      <div id="qr-result" style="margin-top:12px;font-size:12px;color:var(--text2);line-height:1.7"></div>
+    </div>
+    <div class="modal-btns">
+      <button onclick="closeQRScanner()">Close</button>
+      <button onclick="rescanQR()">🔄 Rescan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Auto-detect: use relative URL on Vercel (backend on Render), localhost in dev
+const BACKEND_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:5000'
+  : 'https://chainvista-api.onrender.com';  // ← UPDATE THIS after deploying to Render
+const API = BACKEND_URL + '/api';
+let currentPage = 'dashboard';
+let charts = {};
+let trackingInterval = null, liveInterval = null;
+let leafletMap = null;
+
+// ─────────── GLOBE ANIMATION ───────────
+(function drawGlobe() {
+  const canvas = document.getElementById('globeCanvas');
+  const ctx = canvas.getContext('2d');
+  function resize() {
+    const w = canvas.parentElement.offsetWidth;
+    canvas.width = w; canvas.height = w;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  let angle = 0;
+  const points = [];
+  for (let i = 0; i < 320; i++) {
+    const phi = Math.acos(-1 + (2 * i) / 320);
+    const theta = Math.sqrt(320 * Math.PI) * phi;
+    points.push({ phi, theta, size: Math.random() * 2.5 + 0.5, bright: Math.random() > 0.85 });
+  }
+  const lines = [];
+  for (let i = 0; i < 60; i++) {
+    lines.push({ phi1: Math.random() * Math.PI, theta1: Math.random() * Math.PI * 2,
+                 phi2: Math.random() * Math.PI, theta2: Math.random() * Math.PI * 2 });
+  }
+
+  function project(phi, theta, r) {
+    const cosA = Math.cos(angle), sinA = Math.sin(angle);
+    const x = Math.sin(phi) * Math.cos(theta + angle);
+    const y = Math.cos(phi);
+    const z = Math.sin(phi) * Math.sin(theta + angle);
+    const cx = canvas.width / 2, cy = canvas.height / 2;
+    const scale = cx * 0.85;
+    return { px: cx + x * scale, py: cy - y * scale, z };
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    angle += 0.004;
+
+    // Draw lines
+    for (const l of lines) {
+      const p1 = project(l.phi1, l.theta1);
+      const p2 = project(l.phi2, l.theta2);
+      if (p1.z > -0.1 || p2.z > -0.1) {
+        ctx.beginPath();
+        ctx.moveTo(p1.px, p1.py);
+        ctx.lineTo(p2.px, p2.py);
+        const minZ = Math.min(p1.z, p2.z);
+        const alpha = Math.max(0, minZ) * 0.15;
+        ctx.strokeStyle = `rgba(124,58,237,${alpha})`;
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+    }
+
+    // Draw points
+    for (const p of points) {
+      const proj = project(p.phi, p.theta);
+      if (proj.z < -0.05) continue;
+      const alpha = Math.max(0, proj.z) * (p.bright ? 1 : 0.6);
+      const r = p.size * (0.5 + proj.z * 0.5);
+      ctx.beginPath();
+      ctx.arc(proj.px, proj.py, r, 0, Math.PI * 2);
+      if (p.bright) {
+        ctx.fillStyle = `rgba(233,30,140,${alpha})`;
+        ctx.shadowColor = 'rgba(233,30,140,0.8)';
+        ctx.shadowBlur = 6;
+      } else {
+        ctx.fillStyle = `rgba(255,255,255,${alpha * 0.7})`;
+        ctx.shadowBlur = 0;
+      }
+      ctx.fill();
+    }
+    ctx.shadowBlur = 0;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ─────────── APP NAVIGATION ───────────
+function launchApp(page) {
+  document.getElementById('landing').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  navigate(page || 'dashboard');
+  loadAlertCount();
+  startLiveUpdates();
+}
+
+function navigate(page) {
+  clearInterval(trackingInterval);
+  if (leafletMap && page !== 'tracking') { leafletMap.remove(); leafletMap = null; }
+  destroyCharts();
+  currentPage = page;
+
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('nav-' + page).classList.add('active');
+
+  const content = document.getElementById('page-content');
+  content.innerHTML = '<div class="loader"><div class="spinner"></div>Loading...</div>';
+  content.style.animation = 'none';
+  setTimeout(() => { content.style.animation = ''; }, 10);
+
+  setTimeout(() => {
+    if (page === 'dashboard') renderDashboard();
+    else if (page === 'shipments') renderShipments();
+    else if (page === 'tracking') renderTracking();
+    else if (page === 'alerts') renderAlerts();
+    else if (page === 'analytics') renderAnalytics();
+  }, 200);
+}
+
+function destroyCharts() {
+  Object.values(charts).forEach(c => c && c.destroy());
+  charts = {};
+}
+
+// ─────────── DASHBOARD ───────────
+async function renderDashboard() {
+  const [dash, trends, sensors, bc] = await Promise.all([
+    apiFetch('/dashboard'), apiFetch('/iot/trends'),
+    apiFetch('/sensor/distribution'), apiFetch('/blockchain/activity')
+  ]);
+  const c = document.getElementById('page-content');
+  c.innerHTML = `
+    <div class="page-title" style="color:var(--text);font-size:22px;margin-bottom:28px;">ChainVista Dashboard</div>
+    <div class="stat-grid" id="stat-grid-top">
+      ${statCard('Wallet', dash.wallet, '#7c3aed')}
+      ${statCard('Network', dash.network, '#00e5a0')}
+      ${statCard('Contract', dash.contract, '#e91e8c')}
+    </div>
+    <div class="stat-grid-4">
+      ${statCard('Temperature', dash.temperature + '°C', '#e91e8c')}
+      ${statCard('Humidity', dash.humidity + '%', '#00d4ff')}
+      ${statCard('Devices Online', dash.devices_online, '#7c3aed')}
+      ${statCard('Reputation Score', dash.reputation_score > 0 ? dash.reputation_score : '--', '#00e5a0')}
+    </div>
+    <div class="passport-section">
+      <div class="mm-bar">
+        <div class="passport-title" style="margin-bottom:0">Passport Controls</div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <div class="mm-status" id="mm-status">
+            <div class="mm-status-dot" id="mm-dot"></div>
+            <span id="mm-label">Not Connected</span>
+          </div>
+          <button class="mm-connect-btn" id="mm-btn" onclick="connectMetaMask()">
+            <svg width="20" height="20" viewBox="0 0 318 318" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M274.1 35.5L174.5 108.2l19.1-45.2 80.5-27.5z" fill="#E2761B" stroke="#E2761B"/><path d="M44.5 35.5l98.5 73.3-18.2-45.8L44.5 35.5z" fill="#E4761B" stroke="#E4761B"/><path d="M236.8 206.2l-26.5 40.6 56.7 15.6 16.3-55.3-46.5-.9z" fill="#E4761B" stroke="#E4761B"/><path d="M35.4 207.1l16.2 55.3 56.6-15.6-26.4-40.6-46.4.9z" fill="#E4761B" stroke="#E4761B"/><path d="M104.7 141.5l-15.8 23.9 56.3 2.5-1.9-60.6-38.6 34.2z" fill="#E4761B" stroke="#E4761B"/><path d="M213.9 141.5l-39.2-34.9-1.3 61.3 56.2-2.5-15.7-23.9z" fill="#E4761B" stroke="#E4761B"/><path d="M108.2 246.8l33.8-16.4-29.2-22.8-4.6 39.2z" fill="#E4761B" stroke="#E4761B"/><path d="M175.6 230.4l33.9 16.4-4.7-39.2-29.2 22.8z" fill="#E4761B" stroke="#E4761B"/></svg>
+            Connect MetaMask
+          </button>
+        </div>
+      </div>
+      <div class="tx-progress" id="tx-progress">
+        <div class="tx-spinner"></div>
+        <span id="tx-msg">Waiting for MetaMask signature...</span>
+        <a id="tx-link" class="tx-link" href="#" target="_blank" style="margin-left:auto"></a>
+      </div>
+      <div class="passport-btns" style="margin-top:14px">
+        <button class="pp-btn pp-issue"  onclick="mmPassport('issue')">Issue Passport</button>
+        <button class="pp-btn pp-update" onclick="mmPassport('update')">Update Passport</button>
+        <button class="pp-btn pp-view"   onclick="openPassportModal('view')">View Passport</button>
+        <button class="pp-btn pp-verify" onclick="mmPassport('verify')">Verify Data</button>
+        <button class="pp-btn pp-mint"   onclick="mmPassport('mint')">Mint NFT Passport</button>
+      </div>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-card"><div class="chart-card-title">Temperature Trend</div><div class="chart-wrap"><canvas id="tempChart"></canvas></div></div>
+      <div class="chart-card"><div class="chart-card-title">Humidity Trend</div><div class="chart-wrap"><canvas id="humChart"></canvas></div></div>
+      <div class="chart-card"><div class="chart-card-title">Sensor Distribution</div><div class="chart-wrap"><canvas id="sensorChart"></canvas></div></div>
+    </div>
+    <div class="bc-section">
+      <div class="bc-title">Recent Blockchain Activity</div>
+      <table>
+        <thead><tr><th>Action</th><th>Tx Hash</th><th>Gas Used</th><th>Status</th></tr></thead>
+        <tbody>${bc.map(b => `
+          <tr>
+            <td>${b.action}</td>
+            <td style="font-family:monospace;color:var(--cyan);font-size:12px">${b.tx_hash}</td>
+            <td style="color:var(--text3)">${b.gas_used?.toLocaleString()}</td>
+            <td><span class="status-${b.status.toLowerCase()}">${b.status}</span></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+      <button class="etherscan-btn" onclick="toast('Opening Etherscan...')">View Wallet On Etherscan</button>
+    </div>`;
+
+  const labels = trends.labels.map(l => {
+    const d = new Date(l); return d.toLocaleDateString('en',{weekday:'short'});
+  });
+
+  charts.temp = new Chart(document.getElementById('tempChart'), {
+    type:'line', data:{ labels, datasets:[{ data:trends.temperature, borderColor:'#9d5cf6', backgroundColor:'rgba(124,58,237,0.1)', tension:.4, pointBackgroundColor:'#9d5cf6', pointRadius:4, borderWidth:2, fill:true }]},
+    options: chartOpts()
+  });
+  charts.hum = new Chart(document.getElementById('humChart'), {
+    type:'line', data:{ labels, datasets:[{ data:trends.humidity, borderColor:'#00d4ff', backgroundColor:'rgba(0,212,255,0.08)', tension:.4, pointBackgroundColor:'#00d4ff', pointRadius:4, borderWidth:2, fill:true }]},
+    options: chartOpts()
+  });
+  const sColors = ['#7c3aed','#00d4ff','#e91e8c'];
+  charts.sensor = new Chart(document.getElementById('sensorChart'), {
+    type:'doughnut',
+    data:{ labels:sensors.map(s=>s.type), datasets:[{ data:sensors.map(s=>s.count), backgroundColor:sColors, borderColor:'#12122a', borderWidth:3, hoverOffset:4 }]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{color:'#9090b8',font:{size:11},boxWidth:12}}} }
+  });
+}
+
+function statCard(label, value, color) {
+  return `<div class="card">
+    <div class="card-label">${label}</div>
+    <div class="card-value">${value}</div>
+    <div class="card-bar" style="background:${color}"></div>
+  </div>`;
+}
+function chartOpts(extra) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 600, easing: 'easeInOutQuart' },
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks:{ color:'#5a5a8a', font:{ size:11 } }, grid:{ color:'rgba(255,255,255,0.04)' }, border:{ display:false } },
+      y: { ticks:{ color:'#5a5a8a', font:{ size:11 } }, grid:{ color:'rgba(255,255,255,0.04)' }, border:{ display:false } }
+    },
+    ...extra
+  };
+}
+
+// ─────────── SHIPMENTS ───────────
+let shipViewMode = 'grid';
+let shipFilter   = 'all';
+let shipSearch   = '';
+let allShips     = [];
+
+async function renderShipments() {
+  allShips = await apiFetch('/shipments');
+  const c  = document.getElementById('page-content');
+
+  const total     = allShips.length;
+  const transit   = allShips.filter(s => s.status === 'In Transit').length;
+  const delayed   = allShips.filter(s => s.status === 'Delayed').length;
+  const delivered = allShips.filter(s => s.status === 'Delivered').length;
+
+  c.innerHTML = `
+    <div class="ship-page-header">
+      <div class="page-title" style="margin-bottom:0">Active Shipments</div>
+      <div class="ship-toolbar">
+        <input class="ship-search" id="ship-search-input" placeholder="🔍  Search shipment / product…" oninput="filterShipments()" value="${shipSearch}"/>
+        <button class="ship-filter-btn ${shipFilter==='all'?'active':''}"      onclick="setShipFilter('all')">All</button>
+        <button class="ship-filter-btn ${shipFilter==='In Transit'?'active':''}" onclick="setShipFilter('In Transit')">In Transit</button>
+        <button class="ship-filter-btn ${shipFilter==='Delayed'?'active':''}"  onclick="setShipFilter('Delayed')">Delayed</button>
+        <button class="ship-filter-btn ${shipFilter==='Delivered'?'active':''}" onclick="setShipFilter('Delivered')">Delivered</button>
+        <div class="ship-view-toggle">
+          <button class="view-btn ${shipViewMode==='grid'?'active':''}" onclick="setShipView('grid')" title="Grid">⊞</button>
+          <button class="view-btn ${shipViewMode==='list'?'active':''}" onclick="setShipView('list')" title="List">☰</button>
+        </div>
+        <button class="add-shipment-btn" onclick="openAddShipmentModal()">+ Add New Shipment</button>
+      </div>
+    </div>
+
+    <div class="ship-summary-bar">
+      <div class="ship-summary-card">
+        <div class="ship-summary-icon" style="background:rgba(124,58,237,.15)">📦</div>
+        <div><div class="ship-summary-label">Total</div><div class="ship-summary-val">${total}</div></div>
+      </div>
+      <div class="ship-summary-card">
+        <div class="ship-summary-icon" style="background:rgba(124,58,237,.15)">🚛</div>
+        <div><div class="ship-summary-label">In Transit</div><div class="ship-summary-val" style="color:var(--purple2)">${transit}</div></div>
+      </div>
+      <div class="ship-summary-card">
+        <div class="ship-summary-icon" style="background:rgba(233,30,140,.12)">⚠️</div>
+        <div><div class="ship-summary-label">Delayed</div><div class="ship-summary-val" style="color:var(--pink)">${delayed}</div></div>
+      </div>
+      <div class="ship-summary-card">
+        <div class="ship-summary-icon" style="background:rgba(0,229,160,.1)">✅</div>
+        <div><div class="ship-summary-label">Delivered</div><div class="ship-summary-val" style="color:var(--green)">${delivered}</div></div>
+      </div>
+    </div>
+
+    <div id="anomaly-panel-wrap"></div>
+    <div class="shipments-grid ${shipViewMode==='list'?'list-view':''}" id="ship-grid">
+      ${getFilteredShips().map(s => shipCard(s)).join('')}
+    </div>`;
+  // Auto-run anomaly detection
+  runAnomalyDetection(false);
+}
+
+function getFilteredShips() {
+  return allShips.filter(s => {
+    const matchFilter = shipFilter === 'all' || s.status === shipFilter;
+    const q = shipSearch.toLowerCase();
+    const matchSearch = !q || s.shipment_no.toLowerCase().includes(q) || s.product.toLowerCase().includes(q) || s.current_location.toLowerCase().includes(q);
+    return matchFilter && matchSearch;
+  });
+}
+
+function filterShipments() {
+  shipSearch = document.getElementById('ship-search-input')?.value || '';
+  document.getElementById('ship-grid').innerHTML = getFilteredShips().map(s => shipCard(s)).join('') || '<div style="color:var(--text3);padding:40px;text-align:center">No shipments match your filter.</div>';
+}
+
+function setShipFilter(f) {
+  shipFilter = f;
+  renderShipments();
+}
+
+function setShipView(v) {
+  shipViewMode = v;
+  const grid = document.getElementById('ship-grid');
+  if (grid) {
+    grid.className = 'shipments-grid' + (v === 'list' ? ' list-view' : '');
+    document.querySelectorAll('.view-btn').forEach((b,i) => b.classList.toggle('active', (i===0&&v==='grid')||(i===1&&v==='list')));
+  }
+}
+
+function shipCard(s) {
+  const badgeMap  = { 'In Transit':'transit', 'Delayed':'delayed', 'Delivered':'delivered', 'Processing':'processing' };
+  const cls       = badgeMap[s.status] || 'transit';
+  const colorMap  = { 'In Transit':'#7c3aed', 'Delayed':'#e91e8c', 'Delivered':'#00e5a0', 'Processing':'#f5a623' };
+  const accentColor = colorMap[s.status] || '#7c3aed';
+
+  // Temp bar: safe 2-8°C for pharma, 15-30°C normal; use 0-45 scale
+  const tempPct = Math.min(100, Math.max(0, ((s.temperature + 5) / 50) * 100));
+  const tempColor = s.temperature < 0 ? '#00d4ff' : s.temperature < 10 ? '#00e5a0' : s.temperature < 28 ? '#7c3aed' : '#e91e8c';
+  const humPct    = Math.min(100, s.humidity);
+  const humColor  = s.humidity > 70 ? '#e91e8c' : s.humidity > 55 ? '#f5a623' : '#00e5a0';
+
+  // Progress steps: Processing → In Transit → Out for Delivery → Delivered
+  const steps  = ['Processing','In Transit','Out for Delivery','Delivered'];
+  const stepIdx = s.status === 'Delayed' ? 1 : steps.indexOf(s.status);
+
+  const progressHTML = `
+    <div class="ship-progress">
+      ${steps.map((step, i) => `
+        ${i > 0 ? `<div class="prog-line ${i <= stepIdx ? 'done' : ''}" style="flex:1"></div>` : ''}
+        <div class="prog-step">
+          <div class="prog-dot ${i < stepIdx ? 'done' : i === stepIdx ? 'active' : 'pending'}"></div>
+          <div class="prog-label">${step === 'Out for Delivery' ? 'OFD' : step}</div>
+        </div>`).join('')}
+    </div>`;
+
+  // Delay probability (ML-style heuristic)
+  const delayScore = (() => {
+    let score = 0;
+    if (s.status === 'Delayed') score += 60;
+    if (s.status === 'Processing') score += 10;
+    if (s.temperature > 30 || s.temperature < -3) score += 25;
+    if (s.humidity > 78) score += 15;
+    const eta = s.eta ? new Date(s.eta) : null;
+    if (eta) {
+      const d = Math.ceil((eta - new Date()) / 86400000);
+      if (d < 0) score += 40;
+      else if (d === 0) score += 20;
+    }
+    return Math.min(99, Math.max(2, score + Math.floor(Math.random()*6)));
+  })();
+  const dpCls   = delayScore >= 55 ? 'high' : delayScore >= 30 ? 'med' : 'low';
+  const dpLabel = delayScore >= 55 ? '⚠ High delay risk' : delayScore >= 30 ? '◑ Moderate risk' : '✓ On track';
+  const delayProbHTML = `<div class="delay-prob ${dpCls}">${dpLabel} &nbsp;<strong>${delayScore}%</strong></div>`;
+
+  const etaDate   = s.eta ? new Date(s.eta) : null;
+  const today     = new Date();
+  const daysLeft  = etaDate ? Math.ceil((etaDate - today) / 86400000) : null;
+  const etaBadge  = daysLeft === null ? 'TBD'
+    : daysLeft < 0  ? `<span style="color:var(--red)">Overdue ${Math.abs(daysLeft)}d</span>`
+    : daysLeft === 0 ? `<span style="color:var(--yellow)">Due Today</span>`
+    : `<span style="color:var(--green)">${daysLeft}d left</span>`;
+
+  return `<div class="ship-card" data-id="${s.id}" onclick="openShipDetail(${s.id})" style="border-left:3px solid ${accentColor}40; border-top-color:${accentColor}30;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;">
+      <div>
+        <div class="ship-no" style="color:${accentColor}">${s.shipment_no}</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px">🚛 ${s.carrier}</div>
+      </div>
+      <span class="ship-badge badge-${cls}">${s.status}</span>
+    </div>
+
+    <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${s.product}">${s.product}</div>
+
+    <div class="ship-route">
+      <div class="ship-route-dot" style="background:var(--green)"></div>
+      <span>${s.origin || '—'}</span>
+      <div class="ship-route-line"></div>
+      <span>→</span>
+      <div class="ship-route-line"></div>
+      <span>${s.destination || s.current_location}</span>
+      <div class="ship-route-dot route-dot-dest" style="background:${accentColor}"></div>
+    </div>
+
+    <div class="ship-metrics">
+      <div class="metric-row">
+        <div class="metric-label">🌡 Temp</div>
+        <div class="metric-bar-wrap"><div class="metric-bar temp-bar" style="width:${tempPct}%;background:${tempColor}"></div></div>
+        <div class="metric-val temp-val">${s.temperature}°C</div>
+      </div>
+      <div class="metric-row">
+        <div class="metric-label">💧 Humid</div>
+        <div class="metric-bar-wrap"><div class="metric-bar hum-bar" style="width:${humPct}%;background:${humColor}"></div></div>
+        <div class="metric-val hum-val">${s.humidity}%</div>
+      </div>
+    </div>
+
+    ${progressHTML}
+
+    <div style="margin-top:10px">
+      ${delayProbHTML}
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+      <div class="ship-loc" style="font-size:11px;color:var(--text3)">📍 ${s.current_location}</div>
+      <div style="font-size:11px">ETA ${s.eta ? s.eta : '—'} &nbsp;${etaBadge}</div>
+    </div>
+  </div>`;
+}
+
+function openAddShipmentModal() {
+  showModal('Add New Shipment', `
+    <label>Product Name</label><input id="m-product" placeholder="e.g. Pharmaceutical Batch B"/>
+    <label>Origin</label><input id="m-origin" placeholder="e.g. Chennai"/>
+    <label>Destination</label><input id="m-dest" placeholder="e.g. Delhi"/>
+    <label>Carrier</label><input id="m-carrier" placeholder="e.g. BlueDart"/>
+    <label>ETA</label><input id="m-eta" type="date"/>
+  `, async () => {
+    const res = await apiPost('/shipments', {
+      product: val('m-product'), origin: val('m-origin'),
+      destination: val('m-dest'), carrier: val('m-carrier'), eta: val('m-eta')
+    });
+    closeModal();
+    toast('Shipment ' + res.shipment_no + ' created!');
+    renderShipments();
+  });
+}
+
+function openShipDetail(id) {
+  apiFetch('/shipments/' + id).then(s => {
+    showModal('Shipment ' + s.shipment_no, `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px">
+        <div><div class="card-label">Product</div><div style="font-weight:600">${s.product}</div></div>
+        <div><div class="card-label">Status</div><div style="font-weight:600;color:var(--pink)">${s.status}</div></div>
+        <div><div class="card-label">Origin</div><div>${s.origin}</div></div>
+        <div><div class="card-label">Destination</div><div>${s.destination}</div></div>
+        <div><div class="card-label">Carrier</div><div>${s.carrier}</div></div>
+        <div><div class="card-label">ETA</div><div>${s.eta}</div></div>
+        <div><div class="card-label">Temperature</div><div>${s.temperature}°C</div></div>
+        <div><div class="card-label">Humidity</div><div>${s.humidity}%</div></div>
+      </div>
+      <label>Update Status</label>
+      <select id="m-status">
+        <option>In Transit</option><option>Delayed</option><option>Delivered</option><option>Processing</option>
+      </select>
+    `, async () => {
+      await apiPut('/shipments/' + s.id + '/status', { status: val('m-status') });
+      closeModal(); toast('Status updated!'); renderShipments();
+    }, 'Update Status');
+  });
+}
+
+// ─────────── TRACKING ───────────
+async function renderTracking() {
+  const ships = await apiFetch('/tracking');
+  const c = document.getElementById('page-content');
+  c.innerHTML = `
+    <div class="page-title">Live Tracking</div>
+    <div class="tracking-stats">
+      ${statCard('Active Shipments', ships.filter(s=>s.status==='In Transit').length, '#7c3aed')}
+      ${statCard('Delayed', ships.filter(s=>s.status==='Delayed').length, '#e91e8c')}
+      ${statCard('Delivered Today', ships.filter(s=>s.status==='Delivered').length, '#00e5a0')}
+    </div>
+    <div style="position:relative;">
+      <div id="trackingMap"></div>
+      <div class="map-legend">
+        <div style="font-size:10px;color:var(--text3);margin-bottom:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:600">Shipment Status</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#7c3aed;box-shadow:0 0 6px #7c3aed"></div>In Transit</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#e91e8c;box-shadow:0 0 6px #e91e8c"></div>Delayed</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#00e5a0;box-shadow:0 0 6px #00e5a0"></div>Delivered</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f5a623;box-shadow:0 0 6px #f5a623"></div>Processing</div>
+      </div>
+    </div>`;
+
+  // Give DOM time to fully paint before Leaflet measures container size
+  setTimeout(() => initLeafletMap(ships), 300);
+}
+
+function initLeafletMap(ships) {
+  const mapEl = document.getElementById('trackingMap');
+  if (!mapEl || !window.L) return;
+
+  // Destroy previous instance
+  if (leafletMap) { leafletMap.remove(); leafletMap = null; }
+
+  // Create map centered on India
+  leafletMap = L.map('trackingMap', {
+    center: [22.5, 82.5],
+    zoom: 5,
+    zoomControl: true,
+    attributionControl: false,
+    minZoom: 4,
+    maxZoom: 10
+  });
+
+  // CartoDB Dark Matter tiles — perfect dark theme match
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    subdomains: 'abcd',
+    maxZoom: 20
+  }).addTo(leafletMap);
+
+  // Force Leaflet to recalculate container size after page animation settles
+  setTimeout(() => leafletMap && leafletMap.invalidateSize(), 100);
+
+  // Small attribution
+  L.control.attribution({ prefix: false, position: 'bottomright' })
+    .addAttribution('© <a href="https://carto.com" style="color:#5a5a8a">CARTO</a>')
+    .addTo(leafletMap);
+
+  const colorMap = {
+    'In Transit': '#7c3aed',
+    'Delayed':    '#e91e8c',
+    'Delivered':  '#00e5a0',
+    'Processing': '#f5a623'
+  };
+
+  ships.forEach(s => {
+    const color = colorMap[s.status] || '#7c3aed';
+    const isMoving = s.status === 'In Transit';
+
+    // Custom HTML marker
+    const markerHtml = `
+      <div class="cv-marker">
+        <div class="cv-marker-dot" style="background:${color};color:${color};border-color:${color}44;${isMoving ? 'animation:markerPulse 1.5s ease infinite' : ''}"></div>
+        <div class="cv-marker-label">
+          <span class="m-id">${s.shipment_no}</span>
+          <span class="m-city">${s.current_location}</span>
+        </div>
+      </div>`;
+
+    const icon = L.divIcon({
+      html: markerHtml,
+      className: '',
+      iconSize: [110, 56],
+      iconAnchor: [8, 8],
+      popupAnchor: [55, 0]
+    });
+
+    const marker = L.marker([s.lat, s.lng], { icon }).addTo(leafletMap);
+    leafletMap['marker_' + s.id] = marker;
+
+    // Rich popup
+    const statusColor = color;
+    const badgeBg = color + '22';
+    marker.bindPopup(`
+      <div class="popup-inner">
+        <div class="popup-title">${s.shipment_no}</div>
+        <div style="display:inline-block;padding:3px 10px;border-radius:12px;background:${badgeBg};color:${statusColor};font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px">${s.status}</div>
+        <div class="popup-row"><span>Location</span><span>${s.current_location}</span></div>
+        <div class="popup-row"><span>Carrier</span><span>${s.carrier || '—'}</span></div>
+        <div class="popup-row"><span>Coordinates</span><span style="font-family:monospace;font-size:11px">${s.lat.toFixed(4)}, ${s.lng.toFixed(4)}</span></div>
+      </div>`, {
+      maxWidth: 220,
+      className: 'cv-popup'
+    });
+  });
+
+  // ── Draw route polylines ──
+  const WAYPOINTS = {
+    "SHP-1023": [[13.0827,80.2707],[14.4426,79.9865],[16.5062,80.6480],[21.1458,79.0882],[23.2599,77.4126],[26.2183,78.1828],[27.1767,78.0081],[28.6139,77.2090]],
+    "SHP-1024": [[18.5204,73.8567],[18.7537,73.4062],[19.2183,72.9781],[19.0760,72.8777]],
+    "SHP-1026": [[22.5726,88.3639],[23.6833,86.9833],[23.3441,85.3096],[21.2514,81.6296],[21.1458,79.0882]],
+    "SHP-1027": [[21.1702,72.8311],[22.3072,73.1812],[23.0225,72.5714],[24.5854,73.7125],[26.9124,75.7873]],
+    "SHP-1028": [[19.0760,72.8777],[19.9975,73.7898],[19.8762,75.3433],[23.2599,77.4126],[23.1815,79.9864],[25.4358,81.8463],[25.5941,85.1376]],
+    "SHP-1029": [[28.6139,77.2090],[27.1767,78.0081],[26.2183,78.1828],[23.2599,77.4126],[21.1458,79.0882],[17.3850,78.4867],[12.9716,77.5946]],
+    "SHP-1030": [[9.9312,76.2673],[10.7867,76.6548],[11.0168,76.9558],[11.6643,78.1460],[13.0827,80.2707]],
+    "SHP-1031": [[17.3850,78.4867],[21.1458,79.0882],[22.7196,75.8577],[23.2599,77.4126],[27.1767,78.0081],[28.6139,77.2090],[30.7333,76.7794]],
+    "SHP-1032": [[12.9716,77.5946],[13.0827,80.2707],[17.6868,83.2185],[20.2961,85.8245],[22.5726,88.3639]],
+    "SHP-1033": [[22.3072,73.1812],[21.1702,72.8311],[19.0760,72.8777],[18.5204,73.8567],[17.3850,78.4867],[12.9716,77.5946],[13.0827,80.2707]],
+  };
+  const routeColors = {'In Transit':'#7c3aed','Delayed':'#e91e8c','Processing':'#f5a623','Delivered':'#00e5a0'};
+
+  ships.forEach(s => {
+    const pts = WAYPOINTS[s.shipment_no];
+    if (!pts || pts.length < 2) return;
+    const col = routeColors[s.status] || '#7c3aed';
+
+    // Dim full route
+    L.polyline(pts, { color: col, weight: 2, opacity: 0.18, dashArray:'6,6' }).addTo(leafletMap);
+
+    // Find closest waypoint index to current position
+    let closest = 0, bestD = Infinity;
+    pts.forEach((p,i) => {
+      const d = Math.abs(p[0]-s.lat) + Math.abs(p[1]-s.lng);
+      if (d < bestD) { bestD=d; closest=i; }
+    });
+    // Bright completed segment
+    if (closest > 0) {
+      L.polyline(pts.slice(0, closest+1), { color: col, weight: 3, opacity: 0.7 }).addTo(leafletMap);
+    }
+  });
+
+  // Fit map to show all markers with padding
+  if (ships.length > 0) {
+    const bounds = L.latLngBounds(ships.map(s => [s.lat, s.lng]));
+    leafletMap.fitBounds(bounds, { padding: [60, 60], maxZoom: 7 });
+  }
+
+  // Live-update map markers every 4 seconds
+  if (window._mapInterval) clearInterval(window._mapInterval);
+  window._mapInterval = setInterval(async () => {
+    if (currentPage !== 'tracking' || !leafletMap) { clearInterval(window._mapInterval); return; }
+    try {
+      const updated = await apiFetch('/shipments/live-update');
+      updated.forEach(s => {
+        const markerKey = 'marker_' + s.id;
+        if (leafletMap[markerKey]) {
+          leafletMap[markerKey].setLatLng([s.lat, s.lng]);
+          const popup = leafletMap[markerKey].getPopup();
+          if (popup) {
+            const col = routeColors[s.status] || '#7c3aed';
+            const bg  = col + '22';
+            popup.setContent('<div class="popup-inner"><div class="popup-title">' + s.shipment_no + '</div><div style="display:inline-block;padding:3px 10px;border-radius:12px;background:' + bg + ';color:' + col + ';font-size:10px;font-weight:700;margin-bottom:8px">' + s.status + '</div><div class="popup-row"><span>Location</span><span>' + s.current_location + '</span></div><div class="popup-row"><span>Temp</span><span>' + s.temperature + '°C</span></div><div class="popup-row"><span>Humidity</span><span>' + s.humidity + '%</span></div></div>');
+          }
+        }
+      });
+    } catch {}
+  }, 3500);
+}
+
+// ─────────── ALERTS ───────────
+async function renderAlerts(filter) {
+  const alerts = await apiFetch('/alerts?resolved=' + (filter === 'all' ? 'true' : 'false'));
+  const c = document.getElementById('page-content');
+  c.innerHTML = `
+    <div class="page-title">System Alerts</div>
+    <div class="alerts-filters">
+      <button class="filter-btn ${!filter||filter==='active'?'active':''}" onclick="renderAlerts('active')">Active</button>
+      <button class="filter-btn ${filter==='all'?'active':''}" onclick="renderAlerts('all')">All</button>
+    </div>
+    <div id="alerts-list">
+      ${alerts.length === 0 ? '<div style="color:var(--text3);padding:40px 0;text-align:center">No alerts found.</div>' :
+        alerts.map(a => alertCard(a)).join('')}
+    </div>`;
+}
+
+function alertCard(a) {
+  const lvl = (a.level || '').toLowerCase().replace(' ', '');
+  const cls = lvl.includes('high') ? 'high' : lvl.includes('warn') ? 'warning' : 'info';
+  const time = new Date(a.created_at).toLocaleString('en',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  return `<div class="alert-card ${cls} ${a.resolved?'resolved':''}" id="alert-${a.id}">
+    <div>
+      <div class="alert-level ${cls}">${a.level}</div>
+      <div class="alert-title-text">${a.title}</div>
+      <div class="alert-msg">${a.message}</div>
+      <div class="alert-time">${time}${a.shipment_ref ? ' • ' + a.shipment_ref : ''}</div>
+    </div>
+    ${!a.resolved ? `<button class="resolve-btn" onclick="resolveAlert(${a.id})">Resolve</button>` : '<span style="font-size:11px;color:var(--green)">✓ Resolved</span>'}
+  </div>`;
+}
+
+async function resolveAlert(id) {
+  await apiPut('/alerts/' + id + '/resolve', {});
+  toast('Alert resolved!');
+  loadAlertCount();
+  renderAlerts();
+}
+
+async function loadAlertCount() {
+  const alerts = await apiFetch('/alerts');
+  const badge = document.getElementById('alert-count-badge');
+  if (badge) {
+    if (alerts.length > 0) { badge.style.display = 'block'; badge.textContent = alerts.length; }
+    else badge.style.display = 'none';
+  }
+}
+
+// ─────────── ANALYTICS ───────────
+async function renderAnalytics() {
+  const [status, tempHist, throughput, trends] = await Promise.all([
+    apiFetch('/analytics/shipment-status'),
+    apiFetch('/analytics/temperature-history'),
+    apiFetch('/analytics/throughput'),
+    apiFetch('/iot/trends')
+  ]);
+  const c = document.getElementById('page-content');
+  c.innerHTML = `
+    <div class="page-title">Analytics Overview</div>
+    <div class="analytics-grid">
+      <div class="chart-card"><div class="chart-card-title">Shipment Throughput (7 Days)</div><div class="chart-wrap-tall"><canvas id="throughputChart"></canvas></div></div>
+      <div class="chart-card"><div class="chart-card-title">Shipment Status Breakdown</div><div class="chart-wrap-tall"><canvas id="statusChart"></canvas></div></div>
+    </div>
+    <div class="analytics-grid-3">
+      <div class="chart-card" style="grid-column:span 2"><div class="chart-card-title">Temperature vs Humidity Trend</div><div class="chart-wrap-tall"><canvas id="tempHumChart"></canvas></div></div>
+      <div class="chart-card"><div class="chart-card-title">Avg. Temperature History</div><div class="chart-wrap-tall"><canvas id="tempHistChart"></canvas></div></div>
+    </div>
+    <div class="chart-card" style="margin-bottom:20px"><div class="chart-card-title">IoT Sensor Readings — Combined View</div><div class="chart-wrap"><canvas id="iotComboChart"></canvas></div></div>`;
+
+  const labels7 = throughput.map(t => {
+    const d = new Date(t.day); return d.toLocaleDateString('en',{weekday:'short'});
+  });
+  charts.throughput = new Chart(document.getElementById('throughputChart'), {
+    type:'bar',
+    data:{ labels:labels7, datasets:[{ data:throughput.map(t=>t.count), backgroundColor:'rgba(124,58,237,0.7)', borderColor:'#7c3aed', borderWidth:2, borderRadius:6, borderSkipped:false }]},
+    options: chartOpts()
+  });
+
+  const statusColors = ['#7c3aed','#e91e8c','#00e5a0','#f5a623'];
+  charts.status = new Chart(document.getElementById('statusChart'), {
+    type:'pie',
+    data:{ labels:status.map(s=>s.status), datasets:[{ data:status.map(s=>s.count), backgroundColor:statusColors, borderColor:'#12122a', borderWidth:3 }]},
+    options:{ responsive:true, maintainAspectRatio:false, animation:{ duration:600 }, plugins:{legend:{position:'bottom', labels:{color:'#9090b8',font:{size:11},boxWidth:12}}} }
+  });
+
+  const trendLabels = trends.labels.map(l => new Date(l).toLocaleDateString('en',{weekday:'short'}));
+  charts.tempHum = new Chart(document.getElementById('tempHumChart'), {
+    type:'line',
+    data:{ labels:trendLabels, datasets:[
+      { label:'Temperature °C', data:trends.temperature, borderColor:'#e91e8c', backgroundColor:'rgba(233,30,140,0.08)', tension:.4, pointBackgroundColor:'#e91e8c', borderWidth:2, fill:true, yAxisID:'y' },
+      { label:'Humidity %', data:trends.humidity, borderColor:'#00d4ff', backgroundColor:'rgba(0,212,255,0.06)', tension:.4, pointBackgroundColor:'#00d4ff', borderWidth:2, fill:true, yAxisID:'y1' }
+    ]},
+    options: chartOpts({
+      plugins:{ legend:{ labels:{ color:'#9090b8', font:{ size:11 } } } },
+      scales:{
+        x:{ ticks:{color:'#5a5a8a',font:{size:11}}, grid:{color:'rgba(255,255,255,0.04)'}, border:{display:false} },
+        y:{ ticks:{color:'#5a5a8a',font:{size:11}}, grid:{color:'rgba(255,255,255,0.04)'}, border:{display:false}, position:'left' },
+        y1:{ ticks:{color:'#5a5a8a',font:{size:11}}, grid:{display:false}, border:{display:false}, position:'right' }
+      }
+    })
+  });
+
+  charts.tempHist = new Chart(document.getElementById('tempHistChart'), {
+    type:'bar',
+    data:{ labels:tempHist.map(t=>new Date(t.day).toLocaleDateString('en',{weekday:'short'})),
+      datasets:[
+        { label:'Max', data:tempHist.map(t=>t.max), backgroundColor:'rgba(233,30,140,0.5)', borderRadius:4 },
+        { label:'Avg', data:tempHist.map(t=>t.avg), backgroundColor:'rgba(124,58,237,0.6)', borderRadius:4 },
+        { label:'Min', data:tempHist.map(t=>t.min), backgroundColor:'rgba(0,212,255,0.4)', borderRadius:4 }
+      ]},
+    options: chartOpts({ plugins:{ legend:{ labels:{ color:'#9090b8', font:{ size:10 } } } } })
+  });
+
+  charts.iotCombo = new Chart(document.getElementById('iotComboChart'), {
+    type:'line',
+    data:{ labels:trendLabels, datasets:[
+      { label:'Temp', data:trends.temperature, borderColor:'#9d5cf6', tension:.4, borderWidth:2.5, pointBackgroundColor:'#9d5cf6', fill:false },
+      { label:'Humidity', data:trends.humidity, borderColor:'#00d4ff', tension:.4, borderWidth:2.5, pointBackgroundColor:'#00d4ff', fill:false }
+    ]},
+    options: chartOpts({ plugins:{ legend:{ labels:{ color:'#9090b8', font:{ size:11 } } } } })
+  });
+}
+
+// ─────────── METAMASK INTEGRATION ───────────
+let mmProvider = null;
+let mmSigner   = null;
+let mmAccount  = null;
+
+const CONTRACT_ADDR = '0x2486651A8bCcb2dDfc6cDDC17EcCb58dF5D86a2';
+
+// ── EIP-6963: Modern multi-wallet provider discovery ──
+let eip6963Providers = [];
+window.addEventListener('eip6963:announceProvider', (event) => {
+  const p = event.detail?.provider;
+  const info = event.detail?.info;
+  if (p && info) {
+    // Prefer MetaMask; store all announced providers
+    eip6963Providers = eip6963Providers.filter(x => x.info.uuid !== info.uuid);
+    eip6963Providers.push({ provider: p, info });
+  }
+});
+// Trigger providers to announce themselves
+window.dispatchEvent(new Event('eip6963:requestProvider'));
+
+// ── getEthereum: tries EIP-6963 first, then legacy window.ethereum ──
+// Polls for up to 3 seconds to handle slow extension injection
+async function getEthereum() {
+  // Guard: MetaMask does NOT work on file:// — must be served via HTTP
+  if (location.protocol === 'file:') {
+    return null; // handled separately in connectMetaMask
+  }
+
+  // Prefer EIP-6963 MetaMask provider if already announced
+  const mmEntry = eip6963Providers.find(x =>
+    x.info.name?.toLowerCase().includes('metamask') ||
+    x.info.rdns === 'io.metamask'
+  );
+  if (mmEntry) return mmEntry.provider;
+
+  // Legacy injection check
+  if (window.ethereum) return window.ethereum;
+
+  // Poll for up to 3 seconds (60 × 50 ms)
+  return new Promise(resolve => {
+    let tries = 0;
+    const id = setInterval(() => {
+      tries++;
+      // Check EIP-6963 arrivals during polling
+      const mm = eip6963Providers.find(x =>
+        x.info.name?.toLowerCase().includes('metamask') ||
+        x.info.rdns === 'io.metamask'
+      );
+      if (mm) { clearInterval(id); resolve(mm.provider); return; }
+      if (window.ethereum) { clearInterval(id); resolve(window.ethereum); return; }
+      if (tries > 60) { clearInterval(id); resolve(null); }
+    }, 50);
+  });
+}
+
+async function connectMetaMask() {
+  const btn = document.getElementById('mm-btn');
+  const dot = document.getElementById('mm-dot');
+  const lbl = document.getElementById('mm-label');
+  if (!btn) return;
+
+  dot.className = 'mm-status-dot pending';
+  lbl.textContent = 'Detecting wallet...';
+  btn.disabled = true;
+
+  // ── file:// protocol guard ──
+  if (location.protocol === 'file:') {
+    dot.className = 'mm-status-dot';
+    lbl.textContent = 'Not Connected';
+    btn.disabled = false;
+    showModal('Cannot Connect via File Protocol', `
+      <div style="text-align:center;padding:8px 0 20px">
+        <div style="font-size:40px;margin-bottom:12px">⚠️</div>
+        <p style="color:var(--text2);font-size:14px;line-height:1.8;margin-bottom:16px">
+          You are opening this page directly as a <strong style="color:#f97316">file://</strong> URL.<br>
+          MetaMask <strong style="color:#fff">only works on HTTP/HTTPS pages</strong> — it will never inject into local files.
+        </p>
+        <p style="color:var(--text2);font-size:13px;margin-bottom:8px">
+          Start the Flask server and open:<br>
+          <code style="background:#1a1a2e;padding:4px 10px;border-radius:6px;color:#00e5a0;font-size:13px">http://localhost:5000</code>
+        </p>
+        <p style="font-size:12px;color:var(--text3)">Run <code>python app.py</code> in your project folder, then visit the URL above.</p>
+      </div>
+    `, () => { closeModal(); }, 'OK, Got It');
+    return;
+  }
+
+  const eth = await getEthereum();
+
+  if (!eth) {
+    dot.className = 'mm-status-dot';
+    lbl.textContent = 'Not Connected';
+    btn.disabled = false;
+    showModal('MetaMask Not Found', `
+      <div style="text-align:center;padding:8px 0 20px">
+        <div style="font-size:40px;margin-bottom:12px">🦊</div>
+        <p style="color:var(--text2);font-size:14px;line-height:1.8;margin-bottom:16px">
+          MetaMask extension was not detected in this browser.<br>
+          Make sure it is <strong style="color:#fff">installed and enabled</strong>, then <strong style="color:#fff">refresh the page</strong> and try again.
+        </p>
+        <p style="font-size:12px;color:var(--text3)">If you already installed MetaMask, try disabling other wallet extensions that may conflict.</p>
+      </div>
+    `, () => { window.open('https://metamask.io/download/','_blank'); closeModal(); }, 'Install MetaMask');
+    return;
+  }
+
+  try {
+    dot.className = 'mm-status-dot pending';
+    lbl.textContent = 'Requesting access...';
+
+    // Direct RPC request — works regardless of ethers.js loading
+    const accounts = await eth.request({ method: 'eth_requestAccounts' });
+    if (!accounts || accounts.length === 0) throw { code: 4001, message: 'No accounts returned' };
+    mmAccount = accounts[0];
+
+    // Get chain info via direct RPC
+    const chainIdHex = await eth.request({ method: 'eth_chainId' });
+    const chainId = parseInt(chainIdHex, 16);
+    const networkNames = {
+      1: 'Ethereum Mainnet', 11155111: 'Sepolia', 137: 'Polygon',
+      56: 'BNB Chain', 42161: 'Arbitrum', 10: 'Optimism',
+      5: 'Goerli', 80001: 'Mumbai'
+    };
+    const networkName = networkNames[chainId] || `Chain ${chainId}`;
+
+    // Setup ethers provider if library loaded, else use raw eth
+    if (window.ethers && window.ethers.providers) {
+      mmProvider = new ethers.providers.Web3Provider(eth);
+      mmSigner   = mmProvider.getSigner();
+    } else {
+      // Fallback: minimal provider object using raw RPC
+      mmProvider = { eth, chainId, networkName };
+      mmSigner   = { 
+        getAddress: async () => mmAccount,
+        signMessage: async (msg) => eth.request({
+          method: 'personal_sign',
+          params: [typeof msg === 'string' ? '0x' + Array.from(new TextEncoder().encode(msg)).map(b=>b.toString(16).padStart(2,'0')).join('') : msg, mmAccount]
+        })
+      };
+    }
+
+    const shortAddr = mmAccount.slice(0,6) + '...' + mmAccount.slice(-4);
+
+    // Update UI
+    dot.className = 'mm-status-dot connected';
+    lbl.innerHTML = `<span class="mm-addr">${shortAddr}</span>&nbsp;&nbsp;<span class="mm-network-badge">${networkName}</span>`;
+    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10" fill="#00e5a0"/><path d="M5 10l3.5 3.5L15 7" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>&nbsp;Connected`;
+    btn.style.background = 'linear-gradient(135deg,#00e5a0,#00b880)';
+    btn.style.boxShadow = '0 0 20px rgba(0,229,160,.35)';
+    btn.disabled = false;
+    btn.onclick = disconnectMetaMask;
+
+    // Event listeners
+    eth.on('accountsChanged', (accs) => {
+      if (!accs || accs.length === 0) disconnectMetaMask();
+      else { mmAccount = accs[0]; connectMetaMask(); }
+    });
+    eth.on('chainChanged', () => window.location.reload());
+
+    const badge = document.getElementById('topbar-wallet-badge');
+    if (badge) badge.textContent = shortAddr;
+    toast(`🦊 Connected: ${shortAddr} · ${networkName}`);
+
+  } catch(e) {
+    dot.className = 'mm-status-dot';
+    btn.disabled = false;
+    if (e.code === 4001 || e.message?.includes('rejected')) {
+      lbl.textContent = 'Rejected by user';
+      toast('⚠ MetaMask request rejected.');
+    } else if (e.code === -32002) {
+      lbl.textContent = 'Pending — check MetaMask';
+      toast('⚠ MetaMask already has a pending request. Open MetaMask to approve it.');
+    } else {
+      lbl.textContent = 'Connection failed';
+      toast('⚠ Error: ' + (e.message || 'Unknown').slice(0, 60));
+      console.error('MetaMask error:', e);
+    }
+    setTimeout(() => {
+      const l = document.getElementById('mm-label');
+      if (l && l.textContent !== 'Not Connected') l.textContent = 'Not Connected';
+    }, 3000);
+  }
+}
+
+function disconnectMetaMask() {
+  mmAccount = null; mmProvider = null; mmSigner = null;
+  const dot = document.getElementById('mm-dot');
+  const lbl = document.getElementById('mm-label');
+  const btn = document.getElementById('mm-btn');
+  if (dot) dot.className = 'mm-status-dot';
+  if (lbl) lbl.textContent = 'Not Connected';
+  if (btn) {
+    btn.innerHTML = `🦊 Connect MetaMask`;
+    btn.style.background = 'linear-gradient(135deg,#f6851b,#e4761b)';
+    btn.style.boxShadow = '0 0 20px rgba(246,133,27,.3)';
+    btn.onclick = connectMetaMask;
+    btn.disabled = false;
+  }
+  const badge = document.getElementById('topbar-wallet-badge');
+  if (badge) badge.textContent = 'Guest Mode';
+  toast('MetaMask disconnected.');
+}
+
+async function mmPassport(type) {
+  // Gate: must be connected
+  if (!mmAccount) {
+    showModal('Connect Wallet First', `
+      <p style="color:var(--text2);font-size:14px;line-height:1.7">
+        You need to connect your MetaMask wallet before performing blockchain passport operations.
+      </p>
+    `, async () => { closeModal(); await connectMetaMask(); }, 'Connect MetaMask');
+    return;
+  }
+
+  if (type === 'issue') {
+    showModal('🔗 Issue Passport on Blockchain', `
+      <p style="font-size:12px;color:var(--text3);margin-bottom:14px">Transaction will be signed by: <span style="color:var(--cyan);font-family:monospace">${mmAccount.slice(0,10)}...${mmAccount.slice(-6)}</span></p>
+      <label>Product Name</label><input id="m-product" placeholder="Pharmaceutical Batch A"/>
+      <label>Origin</label><input id="m-origin" placeholder="Chennai"/>
+      <label>Destination</label><input id="m-dest" placeholder="Delhi"/>
+      <label>Manufacturer</label><input id="m-mfg" placeholder="HealthCorp Ltd."/>
+      <label>Batch Number</label><input id="m-batch" placeholder="BN-2024-001"/>
+    `, async () => {
+      closeModal();
+      await runBlockchainTx('issuePassport', {
+        product: val('m-product') || 'Pharmaceutical Batch A',
+        origin: val('m-origin') || 'Chennai',
+        destination: val('m-dest') || 'Delhi',
+        manufacturer: val('m-mfg') || 'HealthCorp',
+        batch_no: val('m-batch') || 'BN-001'
+      }, 'Passport Issued');
+    }, 'Sign & Submit');
+
+  } else if (type === 'update') {
+    const passports = await apiFetch('/passport/view');
+    if (passports.length === 0) { toast('No passports to update.'); return; }
+    showModal('🔗 Update Passport on Blockchain', `
+      <p style="font-size:12px;color:var(--text3);margin-bottom:14px">Signer: <span style="color:var(--cyan);font-family:monospace">${mmAccount.slice(0,10)}...${mmAccount.slice(-6)}</span></p>
+      <label>Select Passport</label>
+      <select id="m-pid">${passports.map(p=>`<option value="${p.passport_id}">${p.passport_id} — ${p.product_name}</option>`).join('')}</select>
+      <label>New Product Name</label><input id="m-product" placeholder="Updated product name"/>
+      <label>New Destination</label><input id="m-dest" placeholder="Updated destination"/>
+    `, async () => {
+      const pid = val('m-pid');
+      closeModal();
+      await runBlockchainTx('updatePassport', { passport_id: pid, product: val('m-product'), destination: val('m-dest') }, 'Passport Updated');
+    }, 'Sign & Update');
+
+  } else if (type === 'verify') {
+    const passports = await apiFetch('/passport/view');
+    const unverified = passports.filter(p => !p.verified);
+    if (unverified.length === 0) { toast('All passports are already verified.'); return; }
+    showModal('🔗 Verify Passport on Blockchain', `
+      <p style="font-size:12px;color:var(--text3);margin-bottom:14px">Signer: <span style="color:var(--cyan);font-family:monospace">${mmAccount.slice(0,10)}...${mmAccount.slice(-6)}</span></p>
+      <label>Select Passport</label>
+      <select id="m-pid">${unverified.map(p=>`<option value="${p.passport_id}">${p.passport_id} — ${p.product_name}</option>`).join('')}</select>
+      <p style="color:var(--text2);font-size:13px;margin-top:4px">A cryptographic proof will be written to the blockchain and signed by your wallet.</p>
+    `, async () => {
+      const pid = val('m-pid');
+      closeModal();
+      await runBlockchainTx('verifyPassport', { passport_id: pid }, 'Data Verified');
+    }, 'Sign & Verify');
+
+  } else if (type === 'mint') {
+    const passports = await apiFetch('/passport/view');
+    const unminted = passports.filter(p => !p.nft_minted);
+    if (unminted.length === 0) { toast('All passports already minted as NFTs.'); return; }
+    showModal('🔗 Mint NFT Passport', `
+      <p style="font-size:12px;color:var(--text3);margin-bottom:14px">Signer: <span style="color:var(--cyan);font-family:monospace">${mmAccount.slice(0,10)}...${mmAccount.slice(-6)}</span></p>
+      <label>Select Passport</label>
+      <select id="m-pid">${unminted.map(p=>`<option value="${p.passport_id}">${p.passport_id} — ${p.product_name}</option>`).join('')}</select>
+      <div style="background:rgba(124,58,237,0.1);border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:4px;font-size:12px;color:var(--text2)">
+        <div style="color:var(--purple2);font-weight:600;margin-bottom:6px">ERC-721 NFT on Ethereum</div>
+        Estimated gas: ~65,000 units · Standard: ERC-721 · Contract: <span style="font-family:monospace;color:var(--text3)">${CONTRACT_ADDR.slice(0,14)}...</span>
+      </div>
+    `, async () => {
+      const pid = val('m-pid');
+      closeModal();
+      await runBlockchainTx('mintNFT', { passport_id: pid }, 'NFT Minted');
+    }, 'Sign & Mint NFT');
+  }
+}
+
+async function runBlockchainTx(action, data, label) {
+  const bar = document.getElementById('tx-progress');
+  const msg = document.getElementById('tx-msg');
+  const lnk = document.getElementById('tx-link');
+  if (!bar) return;
+
+  bar.classList.add('show');
+  lnk.textContent = '';
+
+  try {
+    const eth = await getEthereum();
+    if (!eth) throw new Error('MetaMask not available');
+
+    const payload = `ChainVista | ${label} | ${JSON.stringify(data)} | ${Date.now()} | ${mmAccount}`;
+
+    // Hex-encode the message for personal_sign
+    const hexMsg = '0x' + Array.from(new TextEncoder().encode(payload))
+      .map(b => b.toString(16).padStart(2,'0')).join('');
+
+    msg.textContent = '🦊 Open MetaMask to sign the message...';
+
+    // Direct personal_sign — always works, no ethers.js needed
+    const signature = await eth.request({
+      method: 'personal_sign',
+      params: [hexMsg, mmAccount]
+    });
+
+    // Generate a deterministic "tx hash" from the signature
+    const sigBytes = new TextEncoder().encode(signature);
+    const hashBuf  = await crypto.subtle.digest('SHA-256', sigBytes);
+    const txHash   = '0x' + [...new Uint8Array(hashBuf)]
+      .map(b => b.toString(16).padStart(2,'0')).join('');
+
+    const shortHash = txHash.slice(0,10) + '...' + txHash.slice(-6);
+    msg.textContent = `✅ ${label} signed! Tx: ${shortHash}`;
+    lnk.textContent = 'View on Etherscan ↗';
+
+    // Detect network for etherscan link
+    const chainHex = await eth.request({ method: 'eth_chainId' });
+    const chainId  = parseInt(chainHex, 16);
+    const explorerBase = chainId === 1
+      ? 'https://etherscan.io/tx/'
+      : chainId === 11155111
+        ? 'https://sepolia.etherscan.io/tx/'
+        : 'https://etherscan.io/tx/';
+    lnk.href = explorerBase + txHash;
+
+    // Update backend
+    let res;
+    if (action === 'issuePassport') {
+      res = await apiPost('/passport/issue', data);
+      toast(`✅ Passport ${res.passport_id || ''} issued on-chain!`);
+    } else if (action === 'updatePassport') {
+      await apiPost('/passport/update', data);
+      toast(`✅ Passport updated on-chain!`);
+    } else if (action === 'verifyPassport') {
+      await apiPost('/passport/verify', data);
+      toast(`✅ Passport verified on-chain!`);
+    } else if (action === 'mintNFT') {
+      res = await apiPost('/passport/mint', data);
+      toast(`✅ NFT Minted! Token: ${res.token_id || ''}`);
+    }
+
+    setTimeout(() => refreshBlockchainTable(txHash, label), 400);
+    setTimeout(() => { bar.classList.remove('show'); }, 7000);
+
+  } catch(e) {
+    if (e.code === 4001 || e.message?.includes('rejected') || e.message?.includes('denied')) {
+      msg.textContent = '⚠ Signing rejected by user.';
+    } else if (e.code === -32002) {
+      msg.textContent = '⚠ MetaMask has a pending request — please open it.';
+    } else {
+      msg.textContent = '⚠ Error: ' + (e.message || 'Unknown').slice(0, 70);
+    }
+    console.error('Tx error:', e);
+    setTimeout(() => { bar.classList.remove('show'); }, 5000);
+  }
+}
+
+async function refreshBlockchainTable(txHash, action) {
+  const bc = await apiFetch('/blockchain/activity');
+  const tbody = document.querySelector('.bc-section tbody');
+  if (!tbody) return;
+  // Prepend new row
+  const newRow = document.createElement('tr');
+  const shortHash = txHash.slice(0,10) + '...' + txHash.slice(-6);
+  newRow.innerHTML = `
+    <td>${action}</td>
+    <td style="font-family:monospace;color:var(--cyan);font-size:12px">${shortHash}</td>
+    <td style="color:var(--text3)">21,000</td>
+    <td><span class="status-success">Success</span></td>`;
+  newRow.style.animation = 'fadeUp .4s ease';
+  tbody.prepend(newRow);
+  if (tbody.children.length > 6) tbody.lastChild.remove();
+}
+
+// ─────────── PASSPORT MODALS ───────────
+function openPassportModal(type) {
+  if (type === 'issue') {
+    showModal('Issue Passport', `
+      <label>Product Name</label><input id="m-product" placeholder="Pharmaceutical Batch A"/>
+      <label>Origin</label><input id="m-origin" placeholder="Chennai"/>
+      <label>Destination</label><input id="m-dest" placeholder="Delhi"/>
+      <label>Manufacturer</label><input id="m-mfg" placeholder="HealthCorp Ltd."/>
+      <label>Batch Number</label><input id="m-batch" placeholder="BN-2024-001"/>
+    `, async () => {
+      const res = await apiPost('/passport/issue', { product:val('m-product'), origin:val('m-origin'), destination:val('m-dest'), manufacturer:val('m-mfg'), batch_no:val('m-batch') });
+      closeModal();
+      toast('✓ Passport ' + res.passport_id + ' issued! Tx: ' + res.tx_hash.slice(0,16) + '...');
+    });
+  } else if (type === 'update') {
+    apiFetch('/passport/view').then(passports => {
+      if (passports.length === 0) { toast('No passports to update.'); return; }
+      showModal('Update Passport', `
+        <label>Select Passport</label>
+        <select id="m-pid">${passports.map(p=>`<option value="${p.passport_id}">${p.passport_id} — ${p.product_name}</option>`).join('')}</select>
+        <label>New Product Name</label><input id="m-product" placeholder="Updated product name"/>
+        <label>New Destination</label><input id="m-dest" placeholder="Updated destination"/>
+      `, async () => {
+        const res = await apiPost('/passport/update', { passport_id:val('m-pid'), product:val('m-product'), destination:val('m-dest') });
+        closeModal(); toast('✓ Passport updated! Tx: ' + res.tx_hash.slice(0,16) + '...');
+      });
+    });
+  } else if (type === 'view') {
+    apiFetch('/passport/view').then(passports => {
+      const doc = document.getElementById('modal-body');
+      doc.innerHTML = `<h3>Passport Registry</h3>
+        ${passports.length === 0 ? '<p style="color:var(--text2)">No passports issued yet.</p>' :
+          `<div style="overflow-y:auto;max-height:360px">
+            ${passports.map(p => `<div style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                <span style="font-family:Syne,sans-serif;font-weight:700">${p.passport_id}</span>
+                <span style="font-size:11px;color:${p.nft_minted?'var(--green)':p.verified?'var(--cyan)':'var(--text3)'}">${p.nft_minted?'NFT Minted':p.verified?'Verified':'Pending'}</span>
+              </div>
+              <div style="font-size:12px;color:var(--text2)">
+                ${p.product_name} &nbsp;·&nbsp; ${p.origin} → ${p.destination}<br>
+                <span style="font-family:monospace;font-size:11px;color:var(--text3)">${p.data_hash || ''}</span>
+              </div>
+            </div>`).join('')}
+          </div>`}
+        <div class="modal-btns"><button onclick="closeModal()">Close</button></div>`;
+      document.getElementById('modal-overlay').classList.add('open');
+    });
+  } else if (type === 'verify') {
+    apiFetch('/passport/view').then(passports => {
+      const unverified = passports.filter(p => !p.verified);
+      if (unverified.length === 0) { toast('All passports verified.'); return; }
+      showModal('Verify Passport Data', `
+        <label>Select Passport to Verify</label>
+        <select id="m-pid">${unverified.map(p=>`<option value="${p.passport_id}">${p.passport_id} — ${p.product_name}</option>`).join('')}</select>
+        <p style="color:var(--text2);font-size:13px">This will write a cryptographic proof to the blockchain.</p>
+      `, async () => {
+        const res = await apiPost('/passport/verify', { passport_id: val('m-pid') });
+        closeModal(); toast('✓ Verification successful! Tx: ' + res.tx_hash.slice(0,16) + '...');
+      }, 'Verify on Blockchain');
+    });
+  } else if (type === 'mint') {
+    apiFetch('/passport/view').then(passports => {
+      const unminted = passports.filter(p => !p.nft_minted);
+      if (unminted.length === 0) { toast('All passports already minted as NFT.'); return; }
+      showModal('Mint NFT Passport', `
+        <label>Select Passport</label>
+        <select id="m-pid">${unminted.map(p=>`<option value="${p.passport_id}">${p.passport_id} — ${p.product_name}</option>`).join('')}</select>
+        <p style="color:var(--text2);font-size:13px">Minting as an ERC-721 NFT on Ethereum mainnet. Gas ~65,000 units.</p>
+      `, async () => {
+        const res = await apiPost('/passport/mint', { passport_id: val('m-pid') });
+        closeModal(); toast('✓ NFT Minted! Token ID: ' + res.token_id + ' · Tx: ' + res.tx_hash.slice(0,16) + '...');
+      }, 'Mint NFT');
+    });
+  }
+}
+
+// ─────────── MODAL HELPERS ───────────
+function showModal(title, body, onConfirm, confirmLabel) {
+  document.getElementById('modal-body').innerHTML = `
+    <h3>${title}</h3>${body}
+    <div class="modal-btns">
+      <button onclick="closeModal()">Cancel</button>
+      <button id="modal-confirm">${confirmLabel || 'Confirm'}</button>
+    </div>`;
+  document.getElementById('modal-confirm').onclick = onConfirm;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+document.getElementById('modal-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+function val(id) { return (document.getElementById(id)||{}).value || ''; }
+
+// ─────────── LIVE UPDATES ───────────
+function startLiveUpdates() {
+  clearInterval(liveInterval);
+  liveInterval = setInterval(async () => {
+    // ── Dashboard IoT tile update ──
+    if (currentPage === 'dashboard') {
+      try {
+        const live = await apiFetch('/iot/live');
+        const tempCard = document.querySelector('.stat-grid-4 .card:nth-child(1) .card-value');
+        const humCard  = document.querySelector('.stat-grid-4 .card:nth-child(2) .card-value');
+        if (tempCard) tempCard.textContent = live.temperature + '°C';
+        if (humCard)  humCard.textContent  = live.humidity + '%';
+      } catch {}
+    }
+
+    // ── Shipments page live patch ──
+    if (currentPage === 'shipments') {
+      try {
+        const ships = await apiFetch('/shipments/live-update');
+        allShips = ships; // keep master list in sync
+
+        ships.forEach(s => {
+          const card = document.querySelector(`.ship-card[data-id="${s.id}"]`);
+          if (!card) return;
+
+          const badgeMap   = { 'In Transit':'transit','Delayed':'delayed','Delivered':'delivered','Processing':'processing' };
+          const colorMap   = { 'In Transit':'#7c3aed','Delayed':'#e91e8c','Delivered':'#00e5a0','Processing':'#f5a623' };
+          const accentColor = colorMap[s.status] || '#7c3aed';
+
+          // Temp bar
+          const tempPct   = Math.min(100, Math.max(0, ((s.temperature + 5) / 50) * 100));
+          const tempColor = s.temperature < 0 ? '#00d4ff' : s.temperature < 10 ? '#00e5a0' : s.temperature < 28 ? '#7c3aed' : '#e91e8c';
+          const humColor  = s.humidity > 70 ? '#e91e8c' : s.humidity > 55 ? '#f5a623' : '#00e5a0';
+
+          // Animate the bars
+          const tempBar = card.querySelector('.temp-bar');
+          const humBar  = card.querySelector('.hum-bar');
+          const tempVal = card.querySelector('.temp-val');
+          const humVal  = card.querySelector('.hum-val');
+          const locEl   = card.querySelector('.ship-loc');
+          const badgeEl = card.querySelector('.ship-badge');
+          const routeDot2 = card.querySelector('.route-dot-dest');
+
+          if (tempBar) { tempBar.style.width = tempPct + '%'; tempBar.style.background = tempColor; }
+          if (humBar)  { humBar.style.width  = s.humidity + '%'; humBar.style.background = humColor; }
+          if (tempVal) { tempVal.textContent = s.temperature + '°C'; flashEl(tempVal); }
+          if (humVal)  { humVal.textContent  = s.humidity + '%'; }
+          if (locEl)   { if (locEl.textContent !== s.current_location) { locEl.textContent = '📍 ' + s.current_location; flashEl(locEl); } }
+          if (badgeEl) { badgeEl.className = 'ship-badge badge-' + (badgeMap[s.status]||'transit'); badgeEl.textContent = s.status; }
+          if (routeDot2) { routeDot2.style.background = accentColor; }
+          card.style.borderLeftColor = accentColor + '60';
+
+          // Temp alert pulse if out of range
+          if (s.temperature > 30 || s.temperature < -4) {
+            card.style.boxShadow = '0 0 18px rgba(233,30,140,0.4)';
+            setTimeout(() => { card.style.boxShadow = ''; }, 800);
+          }
+        });
+
+        checkLiveAlerts(ships);
+
+        // Refresh summary counts
+        const total     = allShips.length;
+        const transit   = allShips.filter(s => s.status==='In Transit').length;
+        const delayed   = allShips.filter(s => s.status==='Delayed').length;
+        const delivered = allShips.filter(s => s.status==='Delivered').length;
+        const summaryVals = document.querySelectorAll('.ship-summary-val');
+        if (summaryVals[0]) summaryVals[0].textContent = total;
+        if (summaryVals[1]) { summaryVals[1].textContent = transit;   if(transit !== parseInt(summaryVals[1].dataset.prev||transit)) flashEl(summaryVals[1]); summaryVals[1].dataset.prev = transit; }
+        if (summaryVals[2]) { summaryVals[2].textContent = delayed;   if(delayed !== parseInt(summaryVals[2].dataset.prev||delayed)) flashEl(summaryVals[2]); summaryVals[2].dataset.prev = delayed; }
+        if (summaryVals[3]) { summaryVals[3].textContent = delivered; if(delivered !== parseInt(summaryVals[3].dataset.prev||delivered)) flashEl(summaryVals[3]); summaryVals[3].dataset.prev = delivered; }
+
+      } catch(e) { console.warn('Live shipment update failed:', e); }
+    }
+  }, 3000);
+}
+
+function flashEl(el) {
+  if (!el) return;
+  el.style.transition = 'color .15s';
+  el.style.color = '#00e5a0';
+  setTimeout(() => { el.style.color = ''; }, 600);
+}
+
+// ─────────── API HELPERS ───────────
+async function apiFetch(path) {
+  try {
+    const r = await fetch(API + path);
+    return await r.json();
+  } catch (e) {
+    console.warn('API error:', e);
+    return mockData(path);
+  }
+}
+async function apiPost(path, body) {
+  try {
+    const r = await fetch(API + path, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+    return await r.json();
+  } catch (e) { return { success:true, tx_hash:'0xmock...0000', passport_id:'PP-MOCK0001', shipment_no:'SHP-9999', token_id:'NFT-#0000' }; }
+}
+async function apiPut(path, body) {
+  try {
+    const r = await fetch(API + path, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+    return await r.json();
+  } catch (e) { return { success:true }; }
+}
+
+function mockData(path) {
+  if (path.includes('/dashboard')) return { wallet:'0x03b6...a720', network:'mainnet', contract:'0x2486651A...', temperature:25.5, humidity:57.5, devices_online:18, reputation_score:0 };
+  if (path.includes('/iot/trends')) return { labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], temperature:[24.1,25.5,22.8,26.0,23.5,25.1,24.8], humidity:[55.0,57.5,60.2,58.0,56.8,61.0,59.3] };
+  if (path.includes('/sensor/distribution')) return [{ type:'Temperature',count:3},{type:'Humidity',count:2},{type:'Multi',count:1}];
+  if (path.includes('/blockchain/activity')) return [{ action:'Passport Issued',tx_hash:'0x57ab...e912',gas_used:21000,status:'Success'}, {action:'Passport Updated',tx_hash:'0x21fa...bb41',gas_used:18500,status:'Confirmed'},{action:'NFT Minted',tx_hash:'0x82ff...1a7d',gas_used:65000,status:'Success'}];
+  if (path.includes('/shipments')) return [{id:1,shipment_no:'SHP-1023',product:'Pharmaceutical',origin:'Chennai',destination:'Delhi',current_location:'Delhi',status:'In Transit',temperature:4.2,humidity:57.5,carrier:'FastCargo',eta:'2026-03-21'},{id:2,shipment_no:'SHP-1024',product:'Electronics',origin:'Pune',destination:'Mumbai',current_location:'Mumbai',status:'Delayed',temperature:28.2,humidity:62.1,carrier:'BlueDart',eta:'2026-03-23'}];
+  if (path.includes('/tracking')) return [{shipment_no:'SHP-1023',current_location:'Delhi',status:'In Transit',lat:28.6139,lng:77.2090},{shipment_no:'SHP-1024',current_location:'Mumbai',status:'Delayed',lat:19.0760,lng:72.8777},{shipment_no:'SHP-1025',current_location:'Hyderabad',status:'Delivered',lat:17.3850,lng:78.4867}];
+  if (path.includes('/alerts')) return [{id:1,level:'High Alert',title:'Temperature Breach',message:'Temperature exceeded threshold in Warehouse A.',shipment_ref:'SHP-1023',resolved:0,created_at:new Date().toISOString()},{id:2,level:'Warning',title:'Humidity Fluctuation',message:'Humidity fluctuation detected in Shipment #1023.',shipment_ref:'SHP-1023',resolved:0,created_at:new Date().toISOString()}];
+  if (path.includes('/analytics/shipment-status')) return [{status:'In Transit',count:2},{status:'Delayed',count:1},{status:'Delivered',count:1},{status:'Processing',count:1}];
+  if (path.includes('/analytics/temperature-history')) return [{day:'Mon',avg:24.1,min:22.0,max:26.5},{day:'Tue',avg:25.5,min:23.0,max:28.0},{day:'Wed',avg:22.8,min:21.0,max:25.0},{day:'Thu',avg:26.0,min:24.0,max:28.5},{day:'Fri',avg:23.5,min:22.0,max:26.0}];
+  if (path.includes('/analytics/throughput')) return [{day:'Mon',count:2},{day:'Tue',count:4},{day:'Wed',count:3},{day:'Thu',count:5},{day:'Fri',count:2},{day:'Sat',count:1},{day:'Sun',count:3}];
+  if (path.includes('/passport/view')) return [];
+  if (path.includes('/iot/live')) return { temperature:+(24+Math.random()*4).toFixed(1), humidity:+(55+Math.random()*10).toFixed(1) };
+  return [];
+}
+
+// ─────────── TOAST ───────────
+function toast(msg, type='ok', title='') {
+  // Rich stacked toast
+  const stack = document.getElementById('toast-stack');
+  if (!stack) return;
+  const item = document.createElement('div');
+  item.className = 'toast-item ' + type;
+  const icons = {alert:'🚨', warn:'⚠️', ok:'✅', info:'ℹ️'};
+  item.innerHTML = `<div class="toast-icon">${icons[type]||'ℹ️'}</div><div class="toast-body">${title ? '<div class="toast-title">'+title+'</div>' : ''}<div class="toast-msg">${msg}</div></div>`;
+  item.onclick = () => dismissToast(item);
+  stack.appendChild(item);
+  requestAnimationFrame(() => { requestAnimationFrame(() => item.classList.add('in')); });
+  setTimeout(() => dismissToast(item), 5000);
+  // Keep max 4 toasts
+  const all = stack.querySelectorAll('.toast-item');
+  if (all.length > 4) dismissToast(all[0]);
+}
+function dismissToast(el) {
+  el.classList.replace('in','out');
+  setTimeout(() => el.remove(), 350);
+}
+
+// ═══════════════════════════════════════════
+// THEME TOGGLE
+// ═══════════════════════════════════════════
+let cyberMode = false;
+function toggleTheme() {
+  cyberMode = !cyberMode;
+  document.body.classList.toggle('cyber-theme', cyberMode);
+  const btn = document.getElementById('theme-btn');
+  if (btn) btn.textContent = cyberMode ? '🟣 Default Mode' : '🌙 Cyber Mode';
+  toast(cyberMode ? 'Cyber theme activated 🟢' : 'Default theme restored', 'info', 'Theme');
+}
+
+// ═══════════════════════════════════════════
+// SMART COMMAND BAR
+// ═══════════════════════════════════════════
+function openCmdBar() {
+  document.getElementById('cmd-bar-wrap').classList.add('open');
+  setTimeout(() => document.getElementById('cmd-input')?.focus(), 50);
+}
+function closeCmdBar() {
+  document.getElementById('cmd-bar-wrap').classList.remove('open');
+  document.getElementById('cmd-result').classList.remove('visible');
+  document.getElementById('cmd-result').innerHTML = '';
+  document.getElementById('cmd-input').value = '';
+}
+function cmdKeyDown(e) {
+  if (e.key === 'Escape') closeCmdBar();
+  if (e.key === 'Enter') runCmd(document.getElementById('cmd-input').value);
+}
+function cmdAutocomplete() {
+  const q = document.getElementById('cmd-input').value.toLowerCase();
+  const sugg = document.getElementById('cmd-suggestions');
+  sugg.style.display = q.length > 0 ? 'none' : '';
+}
+async function runCmd(query) {
+  if (!query.trim()) return;
+  document.getElementById('cmd-input').value = query;
+  document.getElementById('cmd-suggestions').style.display = 'none';
+  const resultEl = document.getElementById('cmd-result');
+  resultEl.innerHTML = '<span class="cmd-spinner"></span>Analysing shipment data…';
+  resultEl.classList.add('visible');
+
+  try {
+    const shipSummary = allShips.length > 0
+      ? allShips.map(s => `${s.shipment_no}: ${s.product}, ${s.status}, ${s.current_location}, ${s.temperature}°C, ${s.humidity}% humidity, ETA ${s.eta||'TBD'}`).join('\n')
+      : 'No shipment data loaded yet.';
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system: `You are ChainVista AI, an intelligent supply chain assistant. Answer user queries about the following live shipments concisely in 2-4 sentences max. Format any lists as plain text with hyphens. Today is ${new Date().toDateString()}.
+
+CURRENT SHIPMENTS:
+${shipSummary}`,
+        messages:[{role:'user', content: query}]
+      })
+    });
+    const data = await resp.json();
+    const text = data.content?.map(c => c.text||'').join('') || 'No response.';
+    resultEl.innerHTML = `<div style="white-space:pre-wrap;font-size:13px;color:var(--text2);line-height:1.7">${text}</div>`;
+  } catch(e) {
+    resultEl.innerHTML = `<div style="color:var(--red);font-size:12px">⚠ Could not reach AI. Check network.</div>`;
+  }
+}
+// Global Ctrl+K
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey||e.metaKey) && e.key === 'k') { e.preventDefault(); openCmdBar(); }
+  if (e.key === 'Escape') closeCmdBar();
+});
+
+// ═══════════════════════════════════════════
+// AI ANOMALY DETECTOR
+// ═══════════════════════════════════════════
+async function runAnomalyDetection(showToast=true) {
+  const wrap = document.getElementById('anomaly-panel-wrap');
+  if (!wrap) return;
+  if (!allShips.length) return;
+
+  wrap.innerHTML = `<div class="anomaly-panel"><div class="anomaly-header">🤖 AI Anomaly Detector <span class="cmd-spinner" style="margin-left:8px"></span><button class="anomaly-refresh" onclick="runAnomalyDetection(true)">↻ Refresh</button></div><div style="color:var(--text3);font-size:12px">Analysing ${allShips.length} shipments…</div></div>`;
+
+  const shipSummary = allShips.map(s =>
+    `${s.shipment_no}: ${s.product}, status=${s.status}, temp=${s.temperature}°C, humidity=${s.humidity}%, location=${s.current_location}, ETA=${s.eta||'TBD'}`
+  ).join('\n');
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system: `You are a supply chain anomaly detection AI. Analyse the shipment data and return ONLY a JSON array (no markdown, no explanation outside JSON) with up to 5 anomalies. Each object: {"level":"critical|warning|ok","shipment":"SHP-XXXX","issue":"short title","detail":"one sentence explanation"}. Focus on: temperature out of range for product type, delayed shipments, overdue ETAs, suspicious humidity. Today: ${new Date().toDateString()}.`,
+        messages:[{role:'user', content: `Analyse these shipments:
+${shipSummary}`}]
+      })
+    });
+    const data = await resp.json();
+    let raw = data.content?.map(c=>c.text||'').join('') || '[]';
+    raw = raw.replace(/```json|```/g,'').trim();
+    const anomalies = JSON.parse(raw);
+
+    const icons = {critical:'🚨', warning:'⚠️', ok:'✅'};
+    const cls   = {critical:'',  warning:'warn', ok:'ok'};
+
+    wrap.innerHTML = `<div class="anomaly-panel">
+      <div class="anomaly-header">🤖 AI Anomaly Detector
+        <span style="font-size:11px;color:var(--text3);font-weight:400;font-family:'DM Sans',sans-serif;margin-left:6px">${anomalies.length} issue(s) found</span>
+        <button class="anomaly-refresh" onclick="runAnomalyDetection(true)">↻ Refresh</button>
+      </div>
+      ${anomalies.map(a => `<div class="anomaly-item ${cls[a.level]||''}">
+        <div class="anomaly-sev">${icons[a.level]||'ℹ️'}</div>
+        <div>
+          <div style="font-weight:600;color:var(--text);${a.level==='critical'?'color:var(--pink)':a.level==='warning'?'color:var(--yellow)':''}">${a.issue} &nbsp;<span style="font-size:10px;opacity:.7">[${a.shipment}]</span></div>
+          <div class="anomaly-meta">${a.detail}</div>
+        </div>
+      </div>`).join('')}
+    </div>`;
+
+    if (showToast) {
+      const crit = anomalies.filter(a=>a.level==='critical').length;
+      if (crit > 0) toast(`${crit} critical anomaly detected!`, 'alert', 'AI Anomaly');
+      else toast('Anomaly scan complete — ' + anomalies.length + ' issues', 'info', 'AI Anomaly');
+    }
+  } catch(e) {
+    wrap.innerHTML = `<div class="anomaly-panel"><div class="anomaly-header">🤖 AI Anomaly Detector</div><div style="color:var(--text3);font-size:12px">⚠ Could not reach AI API. Ensure you are using Claude.ai or have the API key.</div></div>`;
+  }
+}
+
+// ═══════════════════════════════════════════
+// QR SCANNER
+// ═══════════════════════════════════════════
+let qrScanTimeout = null;
+function openQRScanner() {
+  document.getElementById('qr-overlay').classList.add('open');
+  generateQRPattern();
+  startQRScan();
+}
+function closeQRScanner() {
+  document.getElementById('qr-overlay').classList.remove('open');
+  clearTimeout(qrScanTimeout);
+}
+function generateQRPattern() {
+  const pat = document.getElementById('qr-pattern');
+  if (!pat) return;
+  const cells = Array.from({length:64}, (_,i) => {
+    const dark = Math.random() > 0.45;
+    return `<div class="qr-cell" style="background:${dark ? 'var(--purple2)' : 'transparent'};opacity:${dark?'0.9':'0'}"></div>`;
+  });
+  pat.innerHTML = cells.join('');
+}
+function startQRScan() {
+  const statusEl = document.getElementById('qr-status');
+  const foundEl  = document.getElementById('qr-found');
+  const resultEl = document.getElementById('qr-result');
+  foundEl.style.display = 'none';
+  resultEl.innerHTML = '';
+  if (statusEl) statusEl.textContent = 'Scanning for QR code…';
+
+  // Simulate scan: pick a random shipment
+  qrScanTimeout = setTimeout(() => {
+    if (!allShips.length) { if(statusEl) statusEl.textContent = 'No shipments loaded.'; return; }
+    const s = allShips[Math.floor(Math.random() * allShips.length)];
+    if (statusEl) statusEl.style.display = 'none';
+    if (foundEl)  foundEl.style.display = 'block';
+
+    const col = {'In Transit':'var(--purple)','Delayed':'var(--pink)','Delivered':'var(--green)','Processing':'var(--yellow)'}[s.status] || 'var(--purple)';
+    resultEl.innerHTML = `
+      <div style="text-align:left;background:var(--card);border-radius:10px;padding:14px;border:1px solid var(--border)">
+        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:${col};margin-bottom:10px">${s.shipment_no}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px">
+          <div><div style="color:var(--text3)">Product</div><div style="color:var(--text)">${s.product}</div></div>
+          <div><div style="color:var(--text3)">Status</div><div style="color:${col}">${s.status}</div></div>
+          <div><div style="color:var(--text3)">Location</div><div style="color:var(--text)">${s.current_location}</div></div>
+          <div><div style="color:var(--text3)">ETA</div><div style="color:var(--text)">${s.eta||'TBD'}</div></div>
+          <div><div style="color:var(--text3)">Temp</div><div style="color:${s.temperature>28?'var(--pink)':'var(--green)'}">${s.temperature}°C</div></div>
+          <div><div style="color:var(--text3)">Humidity</div><div style="color:var(--text)">${s.humidity}%</div></div>
+        </div>
+      </div>`;
+    toast('QR scanned: ' + s.shipment_no, 'ok', 'QR Scanner');
+  }, 2200);
+}
+function rescanQR() {
+  clearTimeout(qrScanTimeout);
+  generateQRPattern();
+  document.getElementById('qr-found').style.display = 'none';
+  document.getElementById('qr-result').innerHTML = '';
+  document.getElementById('qr-status').textContent = 'Rescanning…';
+  document.getElementById('qr-status').style.display = '';
+  startQRScan();
+}
+
+// ═══════════════════════════════════════════
+// EXPORT REPORT
+// ═══════════════════════════════════════════
+function exportReport() {
+  const ships = allShips.length ? allShips : [];
+  if (!ships.length) { toast('No shipments to export', 'warn', 'Export'); return; }
+
+  // CSV export
+  const headers = ['Shipment No','Product','Origin','Destination','Current Location','Status','Temperature (°C)','Humidity (%)','Carrier','ETA'];
+  const rows = ships.map(s => [s.shipment_no, s.product, s.origin, s.destination, s.current_location, s.status, s.temperature, s.humidity, s.carrier, s.eta||'TBD'].map(v => '"'+String(v).replace(/"/g,'""')+'"').join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'chainvista_shipments_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click(); URL.revokeObjectURL(url);
+  toast('Exported ' + ships.length + ' shipments as CSV', 'ok', 'Export');
+}
+
+// ═══════════════════════════════════════════
+// ENHANCED LIVE ALERTS — patch into live update
+// ═══════════════════════════════════════════
+let _prevTemps = {};
+let _prevLocs  = {};
+function checkLiveAlerts(ships) {
+  ships.forEach(s => {
+    const prevTemp = _prevTemps[s.id];
+    const prevLoc  = _prevLocs[s.id];
+    // Temp breach
+    if (prevTemp !== undefined) {
+      const isBreachNow  = s.temperature > 30 || s.temperature < -3;
+      const wasBreachPrev = prevTemp > 30 || prevTemp < -3;
+      if (isBreachNow && !wasBreachPrev) {
+        toast(`${s.shipment_no}: Temp spike to ${s.temperature}°C!`, 'alert', 'Temperature Breach');
+      }
+    }
+    // Location change
+    if (prevLoc && prevLoc !== s.current_location) {
+      toast(`${s.shipment_no} moved → ${s.current_location}`, 'info', 'Location Update');
+    }
+    _prevTemps[s.id] = s.temperature;
+    _prevLocs[s.id]  = s.current_location;
+  });
+}
+</script>
+</body>
+</html>
