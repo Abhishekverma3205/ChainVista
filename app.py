@@ -1,72 +1,101 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import sqlite3
 import os
+import sqlite3
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
-# Database path (safe for Render)
-DB_PATH = os.path.join(os.getcwd(), "chainvista.db")
+# -------------------------------
+# DATABASE CONFIG
+# -------------------------------
 
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+# Decide DB type
+USE_POSTGRES = DATABASE_URL is not None
 
 # -------------------------------
-# Database Connection
+# CONNECTION
 # -------------------------------
+
 def get_db_connection():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+    if USE_POSTGRES:
+        conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+        return conn
+    else:
+        conn = sqlite3.connect("chainvista.db")
+        conn.row_factory = sqlite3.Row
+        return conn
 
 
 # -------------------------------
-# Initialize Database
+# INIT DB
 # -------------------------------
+
 def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Users Table
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE,
-            password TEXT
-        )
-    """)
+    if USE_POSTGRES:
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                username TEXT UNIQUE,
+                password TEXT
+            );
+        """)
 
-    # Transactions Table
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS transactions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER,
-            amount REAL,
-            type TEXT,
-            description TEXT,
-            date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(user_id) REFERENCES users(id)
-        )
-    """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS transactions (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER,
+                amount REAL,
+                type TEXT,
+                description TEXT,
+                date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+    else:
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE,
+                password TEXT
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS transactions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                amount REAL,
+                type TEXT,
+                description TEXT,
+                date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
 
     conn.commit()
     conn.close()
 
 
-# Run DB initialization (IMPORTANT for Render)
+# Initialize DB (IMPORTANT)
 init_db()
 
 
 # -------------------------------
-# Routes
+# HOME
 # -------------------------------
-
 @app.route("/")
 def home():
-    return jsonify({"message": "Backend is running 🚀"})
+    return jsonify({"message": "Backend running 🚀"})
 
 
 # -------------------------------
-# Register
+# REGISTER
 # -------------------------------
 @app.route("/register", methods=["POST"])
 def register():
@@ -79,19 +108,20 @@ def register():
 
     try:
         cursor.execute(
+            "INSERT INTO users (username, password) VALUES (%s, %s)" if USE_POSTGRES else
             "INSERT INTO users (username, password) VALUES (?, ?)",
             (username, password)
         )
         conn.commit()
-        return jsonify({"message": "User registered successfully"})
-    except sqlite3.IntegrityError:
+        return jsonify({"message": "User registered"})
+    except Exception as e:
         return jsonify({"error": "Username already exists"}), 400
     finally:
         conn.close()
 
 
 # -------------------------------
-# Login
+# LOGIN
 # -------------------------------
 @app.route("/login", methods=["POST"])
 def login():
@@ -103,20 +133,25 @@ def login():
     cursor = conn.cursor()
 
     cursor.execute(
+        "SELECT * FROM users WHERE username=%s AND password=%s" if USE_POSTGRES else
         "SELECT * FROM users WHERE username=? AND password=?",
         (username, password)
     )
+
     user = cursor.fetchone()
     conn.close()
 
     if user:
-        return jsonify({"message": "Login successful", "user_id": user["id"]})
+        return jsonify({
+            "message": "Login successful",
+            "user_id": user["id"] if USE_POSTGRES else user["id"]
+        })
     else:
         return jsonify({"error": "Invalid credentials"}), 401
 
 
 # -------------------------------
-# Add Transaction
+# ADD TRANSACTION
 # -------------------------------
 @app.route("/add_transaction", methods=["POST"])
 def add_transaction():
@@ -129,10 +164,13 @@ def add_transaction():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
-        INSERT INTO transactions (user_id, amount, type, description)
-        VALUES (?, ?, ?, ?)
-    """, (user_id, amount, t_type, description))
+    cursor.execute(
+        """INSERT INTO transactions (user_id, amount, type, description)
+           VALUES (%s, %s, %s, %s)""" if USE_POSTGRES else
+        """INSERT INTO transactions (user_id, amount, type, description)
+           VALUES (?, ?, ?, ?)""",
+        (user_id, amount, t_type, description)
+    )
 
     conn.commit()
     conn.close()
@@ -141,7 +179,7 @@ def add_transaction():
 
 
 # -------------------------------
-# Get Transactions
+# GET TRANSACTIONS
 # -------------------------------
 @app.route("/transactions/<int:user_id>", methods=["GET"])
 def get_transactions(user_id):
@@ -149,9 +187,11 @@ def get_transactions(user_id):
     cursor = conn.cursor()
 
     cursor.execute(
+        "SELECT * FROM transactions WHERE user_id=%s ORDER BY date DESC" if USE_POSTGRES else
         "SELECT * FROM transactions WHERE user_id=? ORDER BY date DESC",
         (user_id,)
     )
+
     transactions = cursor.fetchall()
     conn.close()
 
@@ -159,22 +199,27 @@ def get_transactions(user_id):
 
 
 # -------------------------------
-# Delete Transaction
+# DELETE TRANSACTION
 # -------------------------------
 @app.route("/delete_transaction/<int:id>", methods=["DELETE"])
 def delete_transaction(id):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("DELETE FROM transactions WHERE id=?", (id,))
+    cursor.execute(
+        "DELETE FROM transactions WHERE id=%s" if USE_POSTGRES else
+        "DELETE FROM transactions WHERE id=?",
+        (id,)
+    )
+
     conn.commit()
     conn.close()
 
-    return jsonify({"message": "Transaction deleted"})
+    return jsonify({"message": "Deleted"})
 
 
 # -------------------------------
-# Run Server (for local only)
+# RUN SERVER (LOCAL ONLY)
 # -------------------------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
