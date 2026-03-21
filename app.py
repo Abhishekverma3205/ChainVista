@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, Response
+from flask import Flask, jsonify, request, render_template, send_from_directory
 from flask_cors import CORS
 import sqlite3
 import random
@@ -10,7 +10,7 @@ import json
 import os
 
 app = Flask(__name__)
-CORS(app, origins=["*"])  # Allow all origins including Vercel
+CORS(app)
 
 DB_PATH = "chainvista.db"
 
@@ -199,12 +199,13 @@ def gen_tx_hash():
 # FRONTEND SERVE
 # ─────────────────────────────────────────────────────────────
 
-@app.route("/")
-@app.route("/index")
+
+@app.route('/')
 def index():
-    html_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "index.html")
-    with open(html_path, "r", encoding="utf-8") as f:
-        return Response(f.read(), mimetype="text/html")
+    conn = sqlite3.connect('chainvista.db')
+    c = conn.cursor()
+    conn.close()
+    return render_template('index.html')
 
 # ─────────────────────────────────────────────────────────────
 # DASHBOARD API
