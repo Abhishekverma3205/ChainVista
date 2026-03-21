@@ -12,7 +12,7 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-DB_PATH = "chainvista.db"
+DB_PATH = os.path.join(os.environ.get("DB_DIR", "/tmp"), "chainvista.db")
 
 # ─────────────────────────────────────────────────────────────
 # DATABASE SETUP
@@ -593,6 +593,9 @@ def shipments_live_update():
 # RUN
 # ─────────────────────────────────────────────────────────────
 
+# Initialize DB on startup — runs under gunicorn AND direct execution
+init_db()
+
 if __name__ == "__main__":
-    init_db()
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(debug=False, host="0.0.0.0", port=port)
