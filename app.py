@@ -12,7 +12,8 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-DB_PATH = "chainvista.db"
+# On Vercel, only /tmp is writable. Locally it falls back to the project dir.
+DB_PATH = "/tmp/chainvista.db" if os.environ.get("VERCEL") else "chainvista.db"
 
 # ─────────────────────────────────────────────────────────────
 # DATABASE SETUP
@@ -202,9 +203,6 @@ def gen_tx_hash():
 
 @app.route('/')
 def index():
-    conn = sqlite3.connect('chainvista.db')
-    c = conn.cursor()
-    conn.close()
     return render_template('index.html')
 
 # ─────────────────────────────────────────────────────────────
