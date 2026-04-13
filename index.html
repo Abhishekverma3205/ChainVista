@@ -38,7 +38,7 @@
   * { margin:0; padding:0; box-sizing:border-box; }
   html, body { height:100%; font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); overflow-x:hidden; }
 
-  /* ──────── LANDING PAGE ──────── */
+  /* LANDING PAGE */
   #landing {
     min-height:100vh; display:flex; align-items:center;
     background: radial-gradient(ellipse 80% 60% at 20% 50%, rgba(124,58,237,0.22) 0%, transparent 60%),
@@ -94,7 +94,7 @@
   }
   #globeCanvas { width:100%; height:100%; }
 
-  /* ──────── APP SHELL (sidebar + main) ──────── */
+  /*APP SHELL (sidebar + main)*/
   #app { display:none; min-height:100vh; }
   #app.visible { display:flex; }
   .sidebar {
@@ -136,7 +136,7 @@
   .page-content { padding:40px 32px; flex:1; animation: fadeUp .4s ease both; }
   .page-title { font-family:'Syne',sans-serif; font-size:30px; font-weight:800; margin-bottom:32px; color:var(--pink); }
 
-  /* ──────── CARDS ──────── */
+  /* CARDS */
   .stat-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:20px; }
   .stat-grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:20px; }
   .card {
@@ -157,7 +157,7 @@
   .chart-wrap { position:relative; width:100%; height:150px; }
   .chart-wrap-tall { position:relative; width:100%; height:200px; }
 
-  /* ──────── PASSPORT CONTROLS ──────── */
+  /*PASSPORT CONTROLS*/
   .passport-section {
     background:var(--card); border-radius:12px; padding:24px; border:1px solid var(--border); margin-bottom:20px;
   }
@@ -192,8 +192,8 @@
   }
   .etherscan-btn:hover { background:#2583f8; }
 
-  /* ──────── SHIPMENTS ──────── */
-  /* ── SHIPMENTS PAGE ENHANCED ── */
+  /*SHIPMENTS*/
+  /* SHIPMENTS PAGE ENHANCED */
   .ship-page-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:24px; }
   .ship-toolbar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
   .ship-search {
@@ -275,7 +275,7 @@
   }
   .add-shipment-btn:hover { transform:translateY(-1px); box-shadow:var(--glow-pink); }
 
-  /* ──────── TRACKING MAP ──────── */
+  /*TRACKING MAP*/
   #trackingMap {
     width:100%; height:520px; border-radius:12px;
     border:1px solid var(--border); position:relative; overflow:hidden;
@@ -328,7 +328,7 @@
   .popup-row span:last-child { color:#c0c0e0; font-weight:500; }
   .tracking-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:24px; }
 
-  /* ──────── ALERTS ──────── */
+  /* ALERTS */
   .alerts-filters { display:flex; gap:8px; margin-bottom:24px; }
   .filter-btn {
     padding:7px 18px; border-radius:6px; border:1px solid var(--border);
@@ -357,11 +357,11 @@
   .resolve-btn:hover { border-color:var(--green); color:var(--green); }
   .alert-time { font-size:11px; color:var(--text3); margin-top:4px; }
 
-  /* ──────── ANALYTICS ──────── */
+  /* ANALYTICS */
   .analytics-grid { display:grid; grid-template-columns:2fr 1fr; gap:16px; margin-bottom:20px; }
   .analytics-grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:20px; }
 
-  /* ──────── MODAL ──────── */
+  /* MODAL */
   .modal-overlay {
     display:none; position:fixed; inset:0; background:rgba(0,0,0,.7);
     z-index:1000; align-items:center; justify-content:center; backdrop-filter:blur(4px);
@@ -384,7 +384,7 @@
   .modal-btns button:first-child { background:transparent; border:1px solid var(--border); color:var(--text2); padding:9px 20px; border-radius:7px; cursor:pointer; }
   .modal-btns button:last-child { background:linear-gradient(135deg,var(--pink),var(--purple)); border:none; color:#fff; padding:9px 22px; border-radius:7px; font-weight:600; cursor:pointer; }
 
-  /* ──────── TOAST ──────── */
+  /* TOAST */
   #toast {
     position:fixed; bottom:30px; right:30px; background:var(--card2);
     border:1px solid var(--green); border-radius:10px; padding:14px 24px;
@@ -393,7 +393,7 @@
   }
   #toast.show { transform:translateY(0); opacity:1; }
 
-  /* ──────── LOADER ──────── */
+  /* LOADER */
   .loader { text-align:center; padding:60px; color:var(--text3); font-size:13px; }
   .spinner {
     width:32px; height:32px; border:2px solid var(--border);
@@ -406,7 +406,7 @@
   @keyframes glow-pulse { 0%,100%{box-shadow:0 0 10px rgba(233,30,140,.3)} 50%{box-shadow:0 0 30px rgba(233,30,140,.7)} }
   .pulse { animation:pulse 2s ease infinite; }
 
-  /* ──────── METAMASK ──────── */
+  /* METAMASK */
   .mm-bar {
     display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;
     gap:12px; margin-bottom:18px;
@@ -441,7 +441,7 @@
   .tx-link { color:var(--cyan); text-decoration:none; font-family:monospace; font-size:11px; }
   .tx-link:hover { text-decoration:underline; }
 
-  /* ════════ THEME TOGGLE ════════ */
+  /* THEME TOGGLE */
   body.cyber-theme {
     --bg:#000a00; --bg2:#001400; --bg3:#001e00;
     --card:#001a00; --card2:#002200;
@@ -467,7 +467,7 @@
   }
   .theme-toggle-btn:hover { border-color:var(--purple2); color:var(--purple2); }
 
-  /* ════════ COMMAND BAR ════════ */
+  /* COMMAND BAR */
   .cmd-bar-wrap {
     position:fixed; top:0; left:0; right:0; bottom:0;
     background:rgba(0,0,0,.75); backdrop-filter:blur(6px);
@@ -504,7 +504,7 @@
   .cmd-result.visible { display:block; }
   .cmd-spinner { display:inline-block; width:14px; height:14px; border:2px solid var(--border); border-top-color:var(--purple); border-radius:50%; animation:spin .6s linear infinite; margin-right:8px; vertical-align:middle; }
 
-  /* ════════ AI ANOMALY PANEL ════════ */
+  /* AI ANOMALY PANEL */
   .anomaly-panel {
     background:var(--card); border:1px solid rgba(233,30,140,.3);
     border-radius:14px; padding:20px 24px; margin-bottom:24px;
@@ -529,7 +529,7 @@
   .anomaly-refresh { background:transparent; border:1px solid var(--border); border-radius:8px; padding:6px 14px; cursor:pointer; font-size:11px; color:var(--text2); margin-left:auto; transition:.2s; }
   .anomaly-refresh:hover { border-color:var(--pink); color:var(--pink); }
 
-  /* ════════ DELAY PROBABILITY BADGE ════════ */
+  /* DELAY PROBABILITY BADGE */
   .delay-prob {
     display:inline-flex; align-items:center; gap:5px;
     padding:3px 9px; border-radius:10px; font-size:10px; font-weight:700;
@@ -540,7 +540,7 @@
   .delay-prob.high { background:rgba(233,30,140,.12); color:var(--pink); border:1px solid rgba(233,30,140,.3); }
   .delay-prob-bar { height:3px; border-radius:3px; transition:width .5s; }
 
-  /* ════════ QR SCANNER MODAL ════════ */
+  /* QR SCANNER MODAL */
   .qr-scanner-box { text-align:center; padding:10px 0 20px; }
   .qr-viewport {
     width:200px; height:200px; border:2px solid var(--purple);
@@ -571,7 +571,7 @@
   .qr-status { font-size:12px; color:var(--text2); margin-bottom:8px; }
   .qr-found { font-size:13px; font-weight:600; color:var(--green); display:none; }
 
-  /* ════════ RICH TOAST STACK ════════ */
+  /* RICH TOAST STACK */
   #toast-stack {
     position:fixed; bottom:30px; right:30px; z-index:9999;
     display:flex; flex-direction:column; gap:8px; align-items:flex-end;
@@ -594,11 +594,185 @@
   .toast-body { flex:1; }
   .toast-title { font-weight:700; font-size:12px; margin-bottom:2px; }
   .toast-msg { color:var(--text2); font-size:11px; line-height:1.5; }
+
+  /* ══════════════════════════════════════
+     MARKETPLACE STYLES
+  ══════════════════════════════════════ */
+  .mp-layout { display:grid; grid-template-columns:220px 1fr; gap:24px; }
+  .mp-sidebar {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:14px; padding:20px; height:fit-content; position:sticky; top:0;
+  }
+  .mp-sidebar-title {
+    font-family:'Syne',sans-serif; font-size:11px; font-weight:700;
+    letter-spacing:.14em; text-transform:uppercase; color:var(--text3); margin-bottom:14px;
+  }
+  .mp-cat-btn {
+    display:flex; align-items:center; justify-content:space-between;
+    width:100%; background:transparent; border:none; border-radius:8px;
+    padding:8px 10px; color:var(--text2); font-family:'DM Sans',sans-serif;
+    font-size:13px; cursor:pointer; transition:.15s; text-align:left; margin-bottom:2px;
+  }
+  .mp-cat-btn:hover { background:rgba(124,58,237,.1); color:var(--text); }
+  .mp-cat-btn.active { background:rgba(124,58,237,.18); color:var(--purple2); font-weight:600; }
+  .mp-cat-count { font-size:10px; color:var(--text3); background:rgba(255,255,255,.06); padding:2px 7px; border-radius:10px; }
+
+  .mp-main { min-width:0; }
+  .mp-topbar {
+    display:flex; align-items:center; justify-content:space-between;
+    flex-wrap:wrap; gap:12px; margin-bottom:20px;
+  }
+  .mp-search-wrap { position:relative; flex:1; min-width:200px; max-width:380px; }
+  .mp-search {
+    width:100%; padding:10px 14px 10px 38px;
+    background:rgba(255,255,255,.04); border:1px solid var(--border);
+    border-radius:10px; color:var(--text); font-family:'DM Sans',sans-serif;
+    font-size:13px; outline:none; transition:.2s;
+  }
+  .mp-search:focus { border-color:rgba(124,58,237,.5); background:rgba(124,58,237,.06); }
+  .mp-search-icon { position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:14px; pointer-events:none; }
+  .mp-sort {
+    padding:9px 14px; background:rgba(255,255,255,.04);
+    border:1px solid var(--border); border-radius:10px;
+    color:var(--text2); font-family:'DM Sans',sans-serif; font-size:13px;
+    cursor:pointer; outline:none;
+  }
+  .mp-actions { display:flex; gap:8px; flex-wrap:wrap; }
+
+  /* Product grid */
+  .mp-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:16px; }
+  .mp-card {
+    background:var(--card); border:1px solid var(--border); border-radius:14px;
+    overflow:hidden; transition:.22s; cursor:pointer; display:flex; flex-direction:column;
+  }
+  .mp-card:hover { border-color:rgba(124,58,237,.45); transform:translateY(-3px); box-shadow:0 12px 32px rgba(0,0,0,.35); }
+  .mp-card-header {
+    height:110px; display:flex; align-items:center; justify-content:center;
+    font-size:48px; position:relative;
+    background:linear-gradient(135deg,rgba(124,58,237,.12),rgba(233,30,140,.08));
+  }
+  .mp-verified-badge {
+    position:absolute; top:10px; right:10px;
+    background:rgba(0,229,160,.15); border:1px solid rgba(0,229,160,.3);
+    color:var(--green); font-size:10px; font-weight:700;
+    padding:3px 8px; border-radius:6px; letter-spacing:.04em;
+  }
+  .mp-card-body { padding:14px 16px; flex:1; display:flex; flex-direction:column; gap:6px; }
+  .mp-card-title { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; line-height:1.3; }
+  .mp-card-cat {
+    font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--purple2); background:rgba(124,58,237,.1);
+    display:inline-block; padding:2px 8px; border-radius:6px;
+  }
+  .mp-card-desc { font-size:12px; color:var(--text2); line-height:1.5; flex:1; }
+  .mp-card-meta { font-size:11px; color:var(--text3); display:flex; align-items:center; gap:6px; }
+  .mp-stars { color:#f5a623; font-size:11px; }
+  .mp-card-footer {
+    padding:12px 16px; border-top:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .mp-price { font-family:'Syne',sans-serif; font-size:16px; font-weight:800; color:var(--pink); }
+  .mp-price-unit { font-size:10px; color:var(--text3); font-weight:400; display:block; }
+  .mp-add-btn {
+    padding:7px 14px; background:linear-gradient(135deg,var(--purple),var(--pink));
+    border:none; border-radius:8px; color:#fff; font-size:12px;
+    font-weight:600; cursor:pointer; transition:.15s;
+  }
+  .mp-add-btn:hover { transform:scale(1.04); box-shadow:0 4px 14px rgba(233,30,140,.35); }
+  .mp-empty { text-align:center; padding:60px 20px; color:var(--text3); font-size:14px; }
+
+  /* Cart drawer */
+  .mp-cart-overlay {
+    position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:200;
+    display:none; backdrop-filter:blur(4px);
+  }
+  .mp-cart-overlay.open { display:block; }
+  .mp-cart-drawer {
+    position:fixed; right:0; top:0; bottom:0; width:380px;
+    background:var(--bg2); border-left:1px solid var(--border);
+    z-index:201; display:flex; flex-direction:column;
+    transform:translateX(100%); transition:.3s cubic-bezier(.16,1,.3,1);
+  }
+  .mp-cart-drawer.open { transform:translateX(0); }
+  .mp-cart-head {
+    padding:20px 24px; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .mp-cart-title { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; }
+  .mp-cart-close { background:none; border:none; color:var(--text2); font-size:20px; cursor:pointer; transition:.15s; }
+  .mp-cart-close:hover { color:var(--pink); }
+  .mp-cart-body { flex:1; overflow-y:auto; padding:16px 24px; }
+  .mp-cart-item {
+    display:flex; gap:12px; align-items:flex-start;
+    padding:14px 0; border-bottom:1px solid rgba(255,255,255,.04);
+  }
+  .mp-cart-emoji { font-size:28px; flex-shrink:0; width:40px; text-align:center; }
+  .mp-cart-info { flex:1; min-width:0; }
+  .mp-cart-item-name { font-size:13px; font-weight:600; margin-bottom:4px; }
+  .mp-cart-item-price { font-size:12px; color:var(--pink); font-weight:700; }
+  .mp-qty-row { display:flex; align-items:center; gap:8px; margin-top:6px; }
+  .mp-qty-btn {
+    width:24px; height:24px; border-radius:6px; border:1px solid var(--border);
+    background:transparent; color:var(--text2); font-size:14px; cursor:pointer; transition:.15s;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .mp-qty-btn:hover { border-color:var(--purple2); color:var(--purple2); }
+  .mp-qty-val { font-size:13px; font-weight:600; min-width:20px; text-align:center; }
+  .mp-cart-del { background:none; border:none; color:var(--text3); font-size:16px; cursor:pointer; transition:.15s; margin-left:auto; }
+  .mp-cart-del:hover { color:var(--red); }
+  .mp-cart-foot {
+    padding:20px 24px; border-top:1px solid var(--border);
+  }
+  .mp-cart-total { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+  .mp-cart-total-label { font-size:13px; color:var(--text2); }
+  .mp-cart-total-val { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; color:var(--green); }
+  .mp-checkout-btn {
+    width:100%; padding:13px; background:linear-gradient(135deg,var(--green),var(--cyan));
+    border:none; border-radius:10px; color:#000; font-family:'DM Sans',sans-serif;
+    font-size:14px; font-weight:700; cursor:pointer; transition:.2s;
+  }
+  .mp-checkout-btn:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(0,229,160,.3); }
+
+  /* Modal: listing detail */
+  .mp-detail-header {
+    font-size:56px; text-align:center; padding:24px;
+    background:linear-gradient(135deg,rgba(124,58,237,.15),rgba(233,30,140,.1));
+    border-radius:12px; margin-bottom:20px;
+  }
+  .mp-detail-title { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; margin-bottom:8px; }
+  .mp-review-item { padding:12px 0; border-bottom:1px solid rgba(255,255,255,.05); }
+  .mp-review-head { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+  .mp-review-name { font-size:13px; font-weight:600; }
+  .mp-review-text { font-size:12px; color:var(--text2); line-height:1.55; }
+
+  /* Post listing form */
+  .mp-post-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .mp-post-grid .full { grid-column:1/-1; }
+
+  /* Orders table */
+  .mp-order-row {
+    display:grid; grid-template-columns:40px 1fr auto auto;
+    gap:12px; align-items:center; padding:12px 0;
+    border-bottom:1px solid rgba(255,255,255,.04); font-size:13px;
+  }
+  .mp-order-status {
+    font-size:11px; font-weight:700; padding:3px 10px; border-radius:10px;
+    letter-spacing:.04em;
+  }
+  .status-confirmed { background:rgba(0,229,160,.12); color:var(--green); border:1px solid rgba(0,229,160,.25); }
+  .status-pending   { background:rgba(245,166,35,.12); color:var(--yellow); border:1px solid rgba(245,166,35,.25); }
+  .status-shipped   { background:rgba(0,212,255,.1); color:var(--cyan); border:1px solid rgba(0,212,255,.2); }
+
+  @media(max-width:900px) {
+    .mp-layout { grid-template-columns:1fr; }
+    .mp-sidebar { display:none; }
+  }
+
 </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════ LANDING PAGE ═══════════════════════════════ -->
+<!-- LANDING PAGE -->
 <div id="landing">
   <div class="landing-noise"></div>
   <div class="landing-content">
@@ -615,7 +789,7 @@
   <div id="globe-wrap"><canvas id="globeCanvas"></canvas></div>
 </div>
 
-<!-- ═══════════════════════════════ APP SHELL ═══════════════════════════════ -->
+<!-- APP SHELL -->
 <div id="app">
   <nav class="sidebar">
     <div class="sidebar-logo">Chain<span>Vista</span></div>
@@ -634,6 +808,10 @@
     <div class="nav-item" onclick="navigate('analytics')" id="nav-analytics">
       <span class="nav-icon">📊</span> Analytics
     </div>
+    <div class="nav-item" onclick="navigate('marketplace')" id="nav-marketplace">
+      <span class="nav-icon">🛒</span> Marketplace
+      <span id="mp-cart-badge" style="margin-left:auto;background:var(--cyan);color:#000;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;display:none"></span>
+    </div>
   </nav>
 
   <div class="main-area">
@@ -647,13 +825,18 @@
         <button onclick="openQRScanner()" style="background:transparent;border:1px solid var(--border);border-radius:8px;padding:5px 12px;font-size:11px;color:var(--text2);cursor:pointer;transition:.2s" onmouseover="this.style.borderColor='var(--cyan)'" onmouseout="this.style.borderColor='var(--border)'">📱 QR Scan</button>
         <button onclick="exportReport()" style="background:transparent;border:1px solid var(--border);border-radius:8px;padding:5px 12px;font-size:11px;color:var(--text2);cursor:pointer;transition:.2s" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--border)'">📤 Export</button>
         <span class="topbar-badge" id="topbar-wallet-badge">Guest Mode</span>
+        <span id="topbar-user-badge" style="display:none;align-items:center;gap:8px;font-size:12px;color:var(--text2);background:rgba(124,58,237,.1);border:1px solid var(--border);border-radius:20px;padding:4px 12px">
+          <span style="width:7px;height:7px;background:var(--green);border-radius:50%;display:inline-block"></span>
+          <span id="topbar-user-name">User</span>
+        </span>
+        <a href="/logout" style="background:transparent;border:1px solid rgba(255,68,68,.25);border-radius:8px;padding:5px 12px;font-size:11px;color:#ff8888;cursor:pointer;transition:.2s;text-decoration:none" onmouseover="this.style.borderColor='#ff4444';this.style.color='#ff4444'" onmouseout="this.style.borderColor='rgba(255,68,68,.25)';this.style.color='#ff8888'">Sign Out</a>
       </div>
     </div>
     <div class="page-content" id="page-content"></div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════ MODAL ═══════════════════════════════ -->
+<!-- MODAL -->
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal" id="modal-body"></div>
 </div>
@@ -663,7 +846,7 @@
 <!-- LEGACY TOAST (kept for compat) -->
 <div id="toast"></div>
 
-<!-- ═══ COMMAND BAR ═══ -->
+<!-- COMMAND BAR -->
 <div class="cmd-bar-wrap" id="cmd-bar-wrap" onclick="if(event.target===this)closeCmdBar()">
   <div class="cmd-bar-box">
     <div class="cmd-bar-header">
@@ -681,7 +864,7 @@
   </div>
 </div>
 
-<!-- ═══ QR SCANNER MODAL ═══ -->
+<!-- QR SCANNER MODAL -->
 <div class="modal-overlay" id="qr-overlay" style="z-index:3000">
   <div class="modal" id="qr-modal" style="max-width:360px">
     <div class="modal-title">📱 Shipment QR Scanner</div>
@@ -714,7 +897,7 @@ let charts = {};
 let trackingInterval = null, liveInterval = null;
 let leafletMap = null;
 
-// ─────────── GLOBE ANIMATION ───────────
+// GLOBE ANIMATION 
 (function drawGlobe() {
   const canvas = document.getElementById('globeCanvas');
   const ctx = canvas.getContext('2d');
@@ -792,7 +975,7 @@ let leafletMap = null;
   draw();
 })();
 
-// ─────────── APP NAVIGATION ───────────
+// APP NAVIGATION 
 function launchApp(page) {
   document.getElementById('landing').style.display = 'none';
   document.getElementById('app').classList.add('visible');
@@ -821,6 +1004,7 @@ function navigate(page) {
     else if (page === 'tracking') renderTracking();
     else if (page === 'alerts') renderAlerts();
     else if (page === 'analytics') renderAnalytics();
+    else if (page === 'marketplace') renderMarketplace();
   }, 200);
 }
 
@@ -829,7 +1013,7 @@ function destroyCharts() {
   charts = {};
 }
 
-// ─────────── DASHBOARD ───────────
+// DASHBOARD RENDERING
 async function renderDashboard() {
   const [dash, trends, sensors, bc] = await Promise.all([
     apiFetch('/dashboard'), apiFetch('/iot/trends'),
@@ -938,7 +1122,7 @@ function chartOpts(extra) {
   };
 }
 
-// ─────────── SHIPMENTS ───────────
+// SHIPMENTS 
 let shipViewMode = 'grid';
 let shipFilter   = 'all';
 let shipSearch   = '';
@@ -1166,7 +1350,7 @@ function openShipDetail(id) {
   });
 }
 
-// ─────────── TRACKING ───────────
+// TRACKING 
 async function renderTracking() {
   const ships = await apiFetch('/tracking');
   const c = document.getElementById('page-content');
@@ -1271,7 +1455,7 @@ function initLeafletMap(ships) {
     });
   });
 
-  // ── Draw route polylines ──
+  // Draw route polylines
   const WAYPOINTS = {
     "SHP-1023": [[13.0827,80.2707],[14.4426,79.9865],[16.5062,80.6480],[21.1458,79.0882],[23.2599,77.4126],[26.2183,78.1828],[27.1767,78.0081],[28.6139,77.2090]],
     "SHP-1024": [[18.5204,73.8567],[18.7537,73.4062],[19.2183,72.9781],[19.0760,72.8777]],
@@ -1334,7 +1518,7 @@ function initLeafletMap(ships) {
   }, 3500);
 }
 
-// ─────────── ALERTS ───────────
+// ALERTS 
 async function renderAlerts(filter) {
   const alerts = await apiFetch('/alerts?resolved=' + (filter === 'all' ? 'true' : 'false'));
   const c = document.getElementById('page-content');
@@ -1381,7 +1565,7 @@ async function loadAlertCount() {
   }
 }
 
-// ─────────── ANALYTICS ───────────
+// ANALYTICS 
 async function renderAnalytics() {
   const [status, tempHist, throughput, trends] = await Promise.all([
     apiFetch('/analytics/shipment-status'),
@@ -1456,7 +1640,7 @@ async function renderAnalytics() {
   });
 }
 
-// ─────────── METAMASK INTEGRATION ───────────
+// METAMASK INTEGRATION 
 let mmProvider = null;
 let mmSigner   = null;
 let mmAccount  = null;
@@ -2266,8 +2450,25 @@ function rescanQR() {
   startQRScan();
 }
 
-// ═══════════════════════════════════════════
-// EXPORT REPORT
+// ── AUTH USER DISPLAY ──
+(async function() {
+  try {
+    const r = await fetch('/api/auth/me');
+    if (r.ok) {
+      const d = await r.json();
+      if (d.authenticated && d.user) {
+        const badge = document.getElementById('topbar-user-badge');
+        const name  = document.getElementById('topbar-user-name');
+        if (badge && name) {
+          badge.style.display = 'flex';
+          const providerIcon = d.user.provider === 'google' ? '🔵 ' : d.user.provider === 'github' ? '⚫ ' : d.user.provider === 'demo' ? '⚡ ' : '';
+          name.textContent = providerIcon + (d.user.name || d.user.email);
+        }
+      }
+    }
+  } catch {}
+})();
+
 // ═══════════════════════════════════════════
 function exportReport() {
   const ships = allShips.length ? allShips : [];
@@ -2310,6 +2511,444 @@ function checkLiveAlerts(ships) {
     _prevLocs[s.id]  = s.current_location;
   });
 }
+
+
+// ══════════════════════════════════════════════════════════════════
+// MARKETPLACE
+// ══════════════════════════════════════════════════════════════════
+let mpState = {
+  listings: [], cart: [], orders: [], categories: [],
+  filter: 'All', search: '', sort: 'newest', view: 'browse'  // browse | post | orders
+};
+
+async function renderMarketplace() {
+  const el = document.getElementById('page-content');
+  el.innerHTML = `<div class="loader"><div class="spinner"></div>Loading Marketplace…</div>`;
+  await Promise.all([mpLoadListings(), mpLoadCart(), mpLoadCategories()]);
+  mpRenderShell();
+}
+
+async function mpLoadListings() {
+  const params = new URLSearchParams({ q: mpState.search, category: mpState.filter, sort: mpState.sort });
+  mpState.listings = await mpApiFetch('/marketplace/listings?' + params);
+}
+async function mpLoadCart()       { mpState.cart       = await mpApiFetch('/marketplace/cart'); mpUpdateBadge(); }
+async function mpLoadCategories() { mpState.categories = await mpApiFetch('/marketplace/categories'); }
+async function mpLoadOrders()     { mpState.orders     = await mpApiFetch('/marketplace/orders'); }
+
+function mpUpdateBadge() {
+  const badge = document.getElementById('mp-cart-badge');
+  const count = mpState.cart.reduce((s, i) => s + i.quantity, 0);
+  if (badge) { badge.textContent = count; badge.style.display = count > 0 ? 'inline' : 'none'; }
+}
+
+function mpRenderShell() {
+  const el = document.getElementById('page-content');
+  const cats = [{ category:'All', count: mpState.listings.length }, ...mpState.categories];
+  const catButtons = cats.map(cat => `
+    <button class="mp-cat-btn ${mpState.filter===cat.category?'active':''}"
+            onclick="mpSetFilter('${cat.category}')">
+      ${cat.category} <span class="mp-cat-count">${cat.count}</span>
+    </button>`).join('');
+
+  const viewBtns = [
+    ['browse','🛍️ Browse'],['post','➕ Post Listing'],['orders','📋 My Orders']
+  ].map(([v,l]) => `
+    <button onclick="mpSetView('${v}')"
+      style="padding:8px 14px;border-radius:8px;border:1px solid ${mpState.view===v?'var(--purple2)':'var(--border)'};
+             background:${mpState.view===v?'rgba(124,58,237,.18)':'transparent'};
+             color:${mpState.view===v?'var(--purple2)':'var(--text2)'};
+             font-family:DM Sans,sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:.15s">
+      ${l}
+    </button>`).join('');
+
+  const cartCount = mpState.cart.reduce((s,i)=>s+i.quantity,0);
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px">
+      <div>
+        <div class="page-title" style="margin-bottom:4px">🛒 Supply Marketplace</div>
+        <div style="font-size:13px;color:var(--text2)">${mpState.listings.length} listings · B2B supply chain sourcing</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        ${viewBtns}
+        <button onclick="mpOpenCart()" style="padding:8px 16px;border-radius:8px;
+          border:1px solid var(--cyan);background:rgba(0,212,255,.08);
+          color:var(--cyan);font-family:DM Sans,sans-serif;font-size:12px;
+          font-weight:700;cursor:pointer;transition:.15s;position:relative">
+          🛒 Cart${cartCount>0?` <span style="background:var(--pink);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px">${cartCount}</span>`:''}
+        </button>
+      </div>
+    </div>
+
+    ${mpState.view==='browse'  ? mpBrowseHTML(catButtons) :
+      mpState.view==='post'    ? mpPostHTML() :
+                                 mpOrdersHTML()}
+
+    <!-- Cart Overlay -->
+    <div class="mp-cart-overlay" id="mp-cart-overlay" onclick="mpCloseCart()"></div>
+    <div class="mp-cart-drawer" id="mp-cart-drawer">
+      <div class="mp-cart-head">
+        <div class="mp-cart-title">🛒 Your Cart</div>
+        <button class="mp-cart-close" onclick="mpCloseCart()">✕</button>
+      </div>
+      <div class="mp-cart-body" id="mp-cart-body">${mpCartItemsHTML()}</div>
+      <div class="mp-cart-foot">
+        <div class="mp-cart-total">
+          <span class="mp-cart-total-label">Total</span>
+          <span class="mp-cart-total-val">₹${mpCartTotal()}</span>
+        </div>
+        <button class="mp-checkout-btn" onclick="mpCheckout()" ${mpState.cart.length===0?'disabled style="opacity:.4;cursor:not-allowed"':''}>
+          ${mpState.cart.length===0?'Cart is empty':'✓ Place Order'}
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function mpBrowseHTML(catButtons) {
+  const cards = mpState.listings.length === 0
+    ? `<div class="mp-empty">No listings found. <a href="#" onclick="mpSetFilter('All');mpState.search='';mpRenderShell()" style="color:var(--purple2)">Clear filters</a></div>`
+    : mpState.listings.map(mpCardHTML).join('');
+
+  return `<div class="mp-layout">
+    <div class="mp-sidebar">
+      <div class="mp-sidebar-title">Categories</div>
+      ${catButtons}
+      <div style="border-top:1px solid var(--border);margin:16px 0"></div>
+      <div class="mp-sidebar-title">Sort By</div>
+      ${[['newest','Newest First'],['rating','Highest Rated'],['price_asc','Price: Low→High'],['price_desc','Price: High→Low']]
+        .map(([v,l]) => `<button class="mp-cat-btn ${mpState.sort===v?'active':''}" onclick="mpSetSort('${v}')">${l}</button>`).join('')}
+    </div>
+    <div class="mp-main">
+      <div class="mp-topbar">
+        <div class="mp-search-wrap">
+          <span class="mp-search-icon">🔍</span>
+          <input class="mp-search" placeholder="Search listings…" value="${mpState.search}"
+                 oninput="mpState.search=this.value;mpDebounceSearch()" />
+        </div>
+        <div style="font-size:12px;color:var(--text3)">${mpState.listings.length} results</div>
+      </div>
+      <div class="mp-grid" id="mp-grid">${cards}</div>
+    </div>
+  </div>`;
+}
+
+function mpCardHTML(item) {
+  const stars = '★'.repeat(Math.round(item.rating||0)) + '☆'.repeat(5-Math.round(item.rating||0));
+  const stock = item.stock <= 5 ? `<span style="color:var(--red);font-size:11px">Only ${item.stock} left</span>` : '';
+  return `
+    <div class="mp-card" onclick="mpOpenDetail(${item.id})">
+      <div class="mp-card-header">
+        ${item.image_emoji}
+        ${item.verified ? '<span class="mp-verified-badge">✓ Verified</span>' : ''}
+      </div>
+      <div class="mp-card-body">
+        <span class="mp-card-cat">${item.category}</span>
+        <div class="mp-card-title">${item.title}</div>
+        <div class="mp-card-desc">${(item.description||'').substring(0,80)}…</div>
+        <div class="mp-card-meta">
+          <span class="mp-stars">${stars}</span>
+          <span>${item.rating||'—'} (${item.review_count||0})</span>
+          · 📍 ${item.location||'India'}
+          ${stock}
+        </div>
+      </div>
+      <div class="mp-card-footer">
+        <div>
+          <div class="mp-price">₹${Number(item.price).toLocaleString('en-IN')}</div>
+          <span class="mp-price-unit">per ${item.unit}</span>
+        </div>
+        <button class="mp-add-btn" onclick="event.stopPropagation();mpAddToCart(${item.id})">+ Cart</button>
+      </div>
+    </div>`;
+}
+
+function mpPostHTML() {
+  const emojis = ['📦','🚚','🏭','⚙️','🌿','💊','🧵','🔌','🔧','🧪','🦐','🚁'];
+  const categories = ['Logistics','Raw Materials','Food & Agri','Electronics','Warehousing','Pharma','Textiles','Auto Parts','Chemicals','Packaging','Other'];
+  return `
+    <div style="max-width:680px">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px">
+        <div style="font-family:Syne,sans-serif;font-size:18px;font-weight:700;margin-bottom:4px">Post a Listing</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:24px">List your product or service on the ChainVista supply marketplace</p>
+        <div class="mp-post-grid">
+          <div class="full form-group"><label class="form-label">Listing Title *</label>
+            <input class="form-input" id="mp-title" placeholder="e.g. Express Cold-Chain Logistics"/></div>
+          <div class="form-group"><label class="form-label">Category *</label>
+            <select class="mp-sort form-input" id="mp-category" style="width:100%">
+              ${categories.map(c=>`<option>${c}</option>`).join('')}
+            </select></div>
+          <div class="form-group"><label class="form-label">Emoji Icon</label>
+            <select class="mp-sort form-input" id="mp-emoji" style="width:100%">
+              ${emojis.map(e=>`<option value="${e}">${e}</option>`).join('')}
+            </select></div>
+          <div class="form-group"><label class="form-label">Price (₹) *</label>
+            <input class="form-input" id="mp-price" type="number" min="0" placeholder="5000"/></div>
+          <div class="form-group"><label class="form-label">Unit</label>
+            <input class="form-input" id="mp-unit" placeholder="per shipment / kg / lot…"/></div>
+          <div class="form-group"><label class="form-label">Stock / Capacity</label>
+            <input class="form-input" id="mp-stock" type="number" min="1" placeholder="100"/></div>
+          <div class="form-group"><label class="form-label">Location</label>
+            <input class="form-input" id="mp-location" placeholder="Mumbai, India"/></div>
+          <div class="full form-group"><label class="form-label">Description</label>
+            <textarea class="form-input" id="mp-desc" rows="3" style="resize:vertical"
+              placeholder="Describe your offering, certifications, capabilities…"></textarea></div>
+          <div class="full form-group"><label class="form-label">Tags (comma separated)</label>
+            <input class="form-input" id="mp-tags" placeholder="cold-chain, pharma, gmp"/></div>
+        </div>
+        <button class="btn-primary" onclick="mpSubmitListing()" style="margin-top:8px">
+          🚀 Publish Listing
+        </button>
+        <div id="mp-post-msg" style="margin-top:12px;font-size:13px;display:none"></div>
+      </div>
+    </div>`;
+}
+
+function mpOrdersHTML() {
+  if (!mpState.orders || mpState.orders.length === 0) {
+    return `<div class="mp-empty" style="padding:80px 20px">
+      <div style="font-size:40px;margin-bottom:12px">📋</div>
+      No orders yet. <a href="#" onclick="mpSetView('browse')" style="color:var(--purple2)">Start shopping →</a>
+    </div>`;
+  }
+  const rows = mpState.orders.map(o => {
+    const statusClass = o.status==='Confirmed'?'status-confirmed':o.status==='Shipped'?'status-shipped':'status-pending';
+    return `<div class="mp-order-row">
+      <span style="font-size:24px">${o.image_emoji||'📦'}</span>
+      <div>
+        <div style="font-weight:600;margin-bottom:2px">${o.title}</div>
+        <div style="font-size:11px;color:var(--text3)">Qty: ${o.quantity} · ${o.category} · ${o.seller_name}</div>
+        <div style="font-size:11px;color:var(--text3)">${o.created_at?.slice(0,10)||''}</div>
+      </div>
+      <span class="mp-order-status ${statusClass}">${o.status}</span>
+      <div style="font-family:Syne,sans-serif;font-weight:800;color:var(--green)">₹${Number(o.total_price).toLocaleString('en-IN')}</div>
+    </div>`;
+  }).join('');
+
+  const total = mpState.orders.reduce((s,o)=>s+o.total_price,0);
+  return `
+    <div style="max-width:760px">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+          <div style="font-family:Syne,sans-serif;font-size:16px;font-weight:700">${mpState.orders.length} Orders</div>
+          <div style="font-size:13px;color:var(--text2)">Total spent: <span style="color:var(--green);font-weight:700">₹${Number(total).toLocaleString('en-IN')}</span></div>
+        </div>
+        ${rows}
+      </div>
+    </div>`;
+}
+
+// ── Cart helpers ──────────────────────────
+function mpCartItemsHTML() {
+  if (!mpState.cart.length) return `<div style="text-align:center;padding:40px 0;color:var(--text3);font-size:13px">Your cart is empty</div>`;
+  return mpState.cart.map(item => `
+    <div class="mp-cart-item">
+      <span class="mp-cart-emoji">${item.image_emoji||'📦'}</span>
+      <div class="mp-cart-info">
+        <div class="mp-cart-item-name">${item.title}</div>
+        <div class="mp-cart-item-price">₹${Number(item.price).toLocaleString('en-IN')} / ${item.unit}</div>
+        <div class="mp-qty-row">
+          <button class="mp-qty-btn" onclick="mpCartQty(${item.id},${item.quantity-1})">−</button>
+          <span class="mp-qty-val">${item.quantity}</span>
+          <button class="mp-qty-btn" onclick="mpCartQty(${item.id},${item.quantity+1})">+</button>
+          <span style="font-size:12px;color:var(--text2);margin-left:6px">= ₹${Number(item.price*item.quantity).toLocaleString('en-IN')}</span>
+        </div>
+      </div>
+      <button class="mp-cart-del" onclick="mpRemoveFromCart(${item.id})">🗑</button>
+    </div>`).join('');
+}
+
+function mpCartTotal() {
+  return Number(mpState.cart.reduce((s,i)=>s+i.price*i.quantity,0)).toLocaleString('en-IN');
+}
+
+function mpOpenCart()  { document.getElementById('mp-cart-overlay')?.classList.add('open'); document.getElementById('mp-cart-drawer')?.classList.add('open'); }
+function mpCloseCart() { document.getElementById('mp-cart-overlay')?.classList.remove('open'); document.getElementById('mp-cart-drawer')?.classList.remove('open'); }
+
+async function mpAddToCart(lid) {
+  await mpApiFetch('/marketplace/cart','POST',{listing_id:lid, quantity:1});
+  await mpLoadCart();
+  // Refresh cart drawer if open
+  const body = document.getElementById('mp-cart-body');
+  if (body) { body.innerHTML = mpCartItemsHTML(); }
+  // Update footer
+  mpRenderCartFooter();
+  toast('Added to cart!','ok','Marketplace');
+}
+
+async function mpRemoveFromCart(cid) {
+  await mpApiFetch('/marketplace/cart/'+cid,'DELETE');
+  await mpLoadCart();
+  const body = document.getElementById('mp-cart-body');
+  if (body) body.innerHTML = mpCartItemsHTML();
+  mpRenderCartFooter();
+}
+
+async function mpCartQty(cid, qty) {
+  await mpApiFetch('/marketplace/cart/'+cid,'PUT',{quantity:qty});
+  await mpLoadCart();
+  const body = document.getElementById('mp-cart-body');
+  if (body) body.innerHTML = mpCartItemsHTML();
+  mpRenderCartFooter();
+}
+
+function mpRenderCartFooter() {
+  const foot = document.querySelector('.mp-cart-foot');
+  if (!foot) return;
+  const isEmpty = mpState.cart.length===0;
+  foot.innerHTML = `
+    <div class="mp-cart-total">
+      <span class="mp-cart-total-label">Total</span>
+      <span class="mp-cart-total-val">₹${mpCartTotal()}</span>
+    </div>
+    <button class="mp-checkout-btn" onclick="mpCheckout()" ${isEmpty?'disabled style="opacity:.4;cursor:not-allowed"':''}>
+      ${isEmpty?'Cart is empty':'✓ Place Order'}
+    </button>`;
+}
+
+async function mpCheckout() {
+  if (!mpState.cart.length) return;
+  const items = mpState.cart.map(i=>({listing_id:i.listing_id, quantity:i.quantity}));
+  const res = await mpApiFetch('/marketplace/orders','POST',{items});
+  if (res.success) {
+    mpCloseCart();
+    await mpLoadCart();
+    await mpLoadOrders();
+    toast(`Order #${res.order_ids?.join(', #')} confirmed!`,'ok','Marketplace');
+    mpRenderShell();
+  }
+}
+
+// ── Listing detail modal ──────────────────
+async function mpOpenDetail(lid) {
+  const data = await mpApiFetch('/marketplace/listing/'+lid);
+  const stars = n => '★'.repeat(Math.round(n||0))+'☆'.repeat(5-Math.round(n||0));
+  const reviewsHTML = (data.reviews||[]).length===0
+    ? `<p style="color:var(--text3);font-size:13px">No reviews yet.</p>`
+    : data.reviews.map(r=>`
+        <div class="mp-review-item">
+          <div class="mp-review-head">
+            <span style="color:#f5a623;font-size:13px">${stars(r.rating)}</span>
+            <span class="mp-review-name">${r.reviewer_name||'Anonymous'}</span>
+            <span style="font-size:11px;color:var(--text3);margin-left:auto">${(r.created_at||'').slice(0,10)}</span>
+          </div>
+          <div class="mp-review-text">${r.comment||''}</div>
+        </div>`).join('');
+
+  const modal = document.getElementById('modal-body');
+  const overlay = document.getElementById('modal-overlay');
+  modal.innerHTML = `
+    <div style="max-width:560px;width:100%;padding:28px">
+      <button onclick="closeModal()" style="float:right;background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer">✕</button>
+      <div class="mp-detail-header">${data.image_emoji||'📦'}</div>
+      <span class="mp-card-cat" style="margin-bottom:10px;display:inline-block">${data.category}</span>
+      ${data.verified?'<span class="mp-verified-badge" style="margin-left:8px">✓ Verified Seller</span>':''}
+      <div class="mp-detail-title">${data.title}</div>
+      <p style="color:var(--text2);font-size:13px;line-height:1.65;margin:10px 0 16px">${data.description||''}</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+        ${[['Seller',data.seller_name],['Location',data.location||'India'],
+           ['Stock',data.stock+' '+data.unit+'s available'],['Rating',stars(data.rating)+' ('+data.review_count+' reviews)']]
+          .map(([k,v])=>`<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px">
+            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">${k}</div>
+            <div style="font-size:13px;font-weight:600">${v}</div></div>`).join('')}
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+        <div>
+          <div class="mp-price" style="font-size:22px">₹${Number(data.price).toLocaleString('en-IN')}</div>
+          <span class="mp-price-unit">per ${data.unit}</span>
+        </div>
+        <button class="mp-add-btn" style="padding:11px 24px;font-size:14px"
+                onclick="mpAddToCart(${lid});closeModal()">🛒 Add to Cart</button>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:16px">
+        <div style="font-family:Syne,sans-serif;font-size:14px;font-weight:700;margin-bottom:12px">Reviews</div>
+        ${reviewsHTML}
+        <div style="margin-top:16px;background:rgba(124,58,237,.06);border:1px solid var(--border);border-radius:10px;padding:14px">
+          <div style="font-size:12px;font-weight:600;margin-bottom:10px;color:var(--text2)">Leave a Review</div>
+          <div style="display:flex;gap:6px;margin-bottom:10px" id="mp-star-input">
+            ${[1,2,3,4,5].map(n=>`<button onclick="mpSetStar(${n},${lid})" data-star="${n}"
+              style="background:none;border:none;font-size:22px;cursor:pointer;color:#555;transition:.1s">★</button>`).join('')}
+          </div>
+          <textarea id="mp-review-text" rows="2" class="form-input"
+            placeholder="Share your experience…" style="margin-bottom:10px;resize:none"></textarea>
+          <button class="mp-add-btn" onclick="mpSubmitReview(${lid})">Submit Review</button>
+        </div>
+      </div>
+    </div>`;
+  overlay.style.display='flex';
+}
+
+let mpSelectedStar = 5;
+function mpSetStar(n, lid) {
+  mpSelectedStar = n;
+  document.querySelectorAll('#mp-star-input button').forEach((b,i)=>{
+    b.style.color = i<n ? '#f5a623' : '#555';
+  });
+}
+
+async function mpSubmitReview(lid) {
+  const comment = document.getElementById('mp-review-text')?.value;
+  await mpApiFetch('/marketplace/review','POST',{listing_id:lid, rating:mpSelectedStar, comment});
+  toast('Review submitted!','ok','Marketplace');
+  closeModal();
+  await mpLoadListings();
+}
+
+// ── Post listing ──────────────────────────
+async function mpSubmitListing() {
+  const title = document.getElementById('mp-title')?.value;
+  const price = document.getElementById('mp-price')?.value;
+  if (!title || !price) { document.getElementById('mp-post-msg').style.display='block'; document.getElementById('mp-post-msg').textContent='Title and price are required.'; document.getElementById('mp-post-msg').style.color='var(--red)'; return; }
+  const payload = {
+    title, price: parseFloat(price),
+    category:    document.getElementById('mp-category')?.value,
+    image_emoji: document.getElementById('mp-emoji')?.value,
+    unit:        document.getElementById('mp-unit')?.value||'unit',
+    stock:       parseInt(document.getElementById('mp-stock')?.value)||1,
+    location:    document.getElementById('mp-location')?.value||'India',
+    description: document.getElementById('mp-desc')?.value,
+    tags:        document.getElementById('mp-tags')?.value,
+  };
+  const res = await mpApiFetch('/marketplace/listing','POST',payload);
+  const msg = document.getElementById('mp-post-msg');
+  if (res.success || res.id) {
+    msg.style.display='block'; msg.style.color='var(--green)'; msg.textContent='✓ Listing published! Switching to browse…';
+    await mpLoadListings(); await mpLoadCategories();
+    setTimeout(()=>{ mpSetView('browse'); },1200);
+  } else {
+    msg.style.display='block'; msg.style.color='var(--red)'; msg.textContent=res.error||'Failed to post.';
+  }
+}
+
+// ── Filters / state helpers ───────────────
+let mpSearchTimeout;
+function mpDebounceSearch() {
+  clearTimeout(mpSearchTimeout);
+  mpSearchTimeout = setTimeout(async ()=>{ await mpLoadListings(); mpRenderShell(); }, 350);
+}
+async function mpSetFilter(cat) {
+  mpState.filter=cat; await mpLoadListings(); mpRenderShell();
+}
+async function mpSetSort(s) {
+  mpState.sort=s; await mpLoadListings(); mpRenderShell();
+}
+async function mpSetView(v) {
+  mpState.view=v;
+  if (v==='orders') await mpLoadOrders();
+  mpRenderShell();
+}
+
+// ── Marketplace dedicated fetch (won't conflict with main apiFetch) ──
+async function mpApiFetch(path, method='GET', body=null) {
+  const opts = { method, headers: {} };
+  if (body) { opts.headers['Content-Type']='application/json'; opts.body=JSON.stringify(body); }
+  try {
+    const r = await fetch('/api' + path, opts);
+    return await r.json();
+  } catch(e) { console.warn('MP API error:', e); return {}; }
+}
+
 </script>
 </body>
 </html>
